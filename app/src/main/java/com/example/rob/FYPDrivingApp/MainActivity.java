@@ -186,17 +186,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if(greatestProbValue > 0.8){
                     String sittingCarString = "Sitting into car is" + greatestProbValue;
                     textToSpeech.speak(sittingCarString, TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-
                     sittingIntoCar = true;
                 }
             }
 
-            List<Float> subListx = (List<Float>) x.subList(0, 19);
-            subListx.clear();
-            List<Float> subListy = (List<Float>) y.subList(0, 19);
-            subListy.clear();
-            List<Float> subListz = (List<Float>) z.subList(0, 19);
-            subListz.clear();
+//            List<Float> subListx = (List<Float>) x.subList(0, 20);
+//            subListx.clear();
+            x.subList(0, 20).clear();
+//            List<Float> subListy = (List<Float>) y.subList(0, 20);
+//            subListy.clear();
+            y.subList(0, 20).clear();
+//            List<Float> subListz = (List<Float>) z.subList(0, 20);
+//            subListz.clear();
+            z.subList(0, 20).clear();
         }
     }
 
@@ -281,14 +283,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
 
-                        mNotificationManager.setInterruptionFilter(NotificationManager.IMPORTANCE_MIN);
+                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+
+//                        mNotificationManager.setNotificationPolicy(NotificationManager.IMPORTANCE_MIN);
 
 
 
                         textToSpeech.speak("Turning on Do not Disturb as I think you're driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
                     }
                 }
-                onPause();
+                if (onFoot) {
+                    onPause();
+                }
 
                 onFoot = false;
             }
