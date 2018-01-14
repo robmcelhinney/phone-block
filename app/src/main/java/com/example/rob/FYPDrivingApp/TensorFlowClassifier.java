@@ -24,7 +24,6 @@ public class TensorFlowClassifier {
     private static final long[] INPUT_SIZE = {1, 200, 3};
 //    private static final int OUTPUT_SIZE = 7;
     private static final int OUTPUT_SIZE = 6;
-//    private static final int OUTPUT_SIZE = 1;
 
     public TensorFlowClassifier(final Context context) {
         inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), MODEL_FILE);
@@ -36,8 +35,7 @@ public class TensorFlowClassifier {
         inferenceInterface.run(OUTPUT_NODES);
         inferenceInterface.fetch(OUTPUT_NODE, result);
 
-        //Downstairs	Jogging	  Sitting   sittingCar	Standing	Upstairs	Walking
-        //Downstairs	Jogging  sittingCar	Standing	Upstairs	Walking
+        //Downstairs	Jogging  sittingCar    Standing    Upstairs    Walking
         return result;
     }
 }

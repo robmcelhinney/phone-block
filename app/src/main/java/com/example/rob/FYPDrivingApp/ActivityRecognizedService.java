@@ -38,8 +38,6 @@ public class ActivityRecognizedService extends IntentService {
         mHandler = new Handler();
     }
 
-    private TextView currText;
-
     @Override
     protected void onHandleIntent(Intent intent) {
         if(ActivityRecognitionResult.hasResult(intent)){
@@ -50,20 +48,8 @@ public class ActivityRecognizedService extends IntentService {
             int confidence = detectedActivity.getConfidence();
             String recognizeActivity = getActivityName(detectedActivity);
 
-            Log.d("ActivityRecogition","Confidence : " + confidence);
-            Log.d("ActivityRecogition","RecognizeActivity : " + recognizeActivity);
-
-//            final String sText = recognizeActivity;
-//            mHandler.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Toast.makeText(ActivityRecognizedService.this, sText, Toast.LENGTH_LONG).show();
-//                }
-//            });
-
             extraOutAct = recognizeActivity;
             extraOutConf = Float.toString(confidence);
-
 
             Intent intentResponse = new Intent();
             intentResponse.setAction(ACTION_ActivityRecognizedService);
@@ -77,18 +63,6 @@ public class ActivityRecognizedService extends IntentService {
     private String getActivityName(DetectedActivity detectedActivity){
         switch (detectedActivity.getType()){
             case DetectedActivity.IN_VEHICLE:
-                // enter here after tensorflow thinks you're in car
-                if(detectedActivity.getConfidence() > 0.9) {
-                    displayNotification("Are you on driving?");
-//                    if (mNotificationManager.isNotificationPolicyAccessGranted()) {
-//                        Log.i("currentInterruptionFil", String.valueOf(mNotificationManager.getCurrentInterruptionFilter()));
-//                        if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
-//                            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-//                            Toast.makeText(getApplicationContext(), "Do Not Disturb", Toast.LENGTH_SHORT)
-//                                    .show();
-//                        }
-//                    }
-                }
                 return "IN_VEHICLE";
             case DetectedActivity.ON_BICYCLE:
                 return "ON_BICYCLE";
@@ -100,14 +74,9 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.RUNNING:
                 return "RUNNING";
             case DetectedActivity.ON_FOOT:
-                // Check
-                if(detectedActivity.getConfidence() > 0.80) {
-                    //start checking with tensorflow
-                }
 //                displayNotification("Are you on foot?");
                 return "ON_FOOT";
             case DetectedActivity.WALKING:
-//                displayNotification("Are you on walking?");
                 return "WALKING";
             case DetectedActivity.UNKNOWN:
                 return "UNKNOWN";

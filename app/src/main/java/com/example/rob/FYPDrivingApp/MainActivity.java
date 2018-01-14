@@ -189,15 +189,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sittingIntoCar = true;
                 }
             }
-
-//            List<Float> subListx = (List<Float>) x.subList(0, 20);
-//            subListx.clear();
             x.subList(0, 20).clear();
-//            List<Float> subListy = (List<Float>) y.subList(0, 20);
-//            subListy.clear();
             y.subList(0, 20).clear();
-//            List<Float> subListz = (List<Float>) z.subList(0, 20);
-//            subListz.clear();
             z.subList(0, 20).clear();
         }
     }
@@ -225,8 +218,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.e( "ActivityRecogition", "hello" );
-
         Intent intent = new Intent( this, ActivityRecognizedService.class );
         PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 3000, pendingIntent );
@@ -264,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float conf = Float.parseFloat(confidence);
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
                 try {
+                    doDisturb();
                     makeNoise();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -278,19 +270,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             else {
                 if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar && mNotificationManager.isNotificationPolicyAccessGranted()) {
-                    if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
-//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-
-
-
-                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-
-//                        mNotificationManager.setNotificationPolicy(NotificationManager.IMPORTANCE_MIN);
-
-
-
-                        textToSpeech.speak("Turning on Do not Disturb as I think you're driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-                    }
+                    doNotDisturb();
                 }
                 if (onFoot) {
                     onPause();
@@ -304,28 +284,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
             //Testing Bluetooth
-            if (activity.equalsIgnoreCase("STILL")){
+            if (activity.equalsIgnoreCase("IN_VEHICLE")){
                 BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
                         && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-//                    getDeviceClass();
-
                     java.util.Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
                     for (BluetoothDevice device : pairedDevices) {
                         BluetoothClass bluetoothClass = device.getBluetoothClass();
                         if (bluetoothClass != null) {
                             int deviceClass = bluetoothClass.getDeviceClass();
-//                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-//                            BTtextView.setText(bluetoothClass.getMajorDeviceClass());
-
-                            BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-//                            Toast.makeText(MainActivity.this, bluetoothClass.getMajorDeviceClass(),
-//                                    Toast.LENGTH_LONG).show();
-//                            }
+                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
+//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
+                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private void doNotDisturb() {
+        if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
+//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            textToSpeech.speak("Turning on Do not Disturb as I think you're driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+        }
+    }
+
+    private void doDisturb() {
+        if (mNotificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
+//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            textToSpeech.speak("Turning off Do not Disturb as I think you're no longer driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
         }
     }
 
