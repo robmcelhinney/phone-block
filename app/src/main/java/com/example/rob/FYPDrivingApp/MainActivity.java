@@ -27,23 +27,24 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.math.BigDecimal;
-
 import java.util.*;
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.Random;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, GoogleApiClient.ConnectionCallbacks,
+public class MainActivity extends AppCompatActivity implements SensorEventListener,
+        TextToSpeech.OnInitListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status>
 {
-    private GoogleApiClient mApiClient;
+
+    public GoogleApiClient mApiClient;
+
     private NotificationManager mNotificationManager;
+
     private MyBroadcastReceiver myBroadcastReceiver;
 
     private static final int N_SAMPLES = 200;
@@ -55,17 +56,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private TextView greatestProb;
 
+    private float sittingcarValue = 0;
+
     private float greatestProbValue = 0;
-
     private TextView sittingcarTextView;
-
     private TextView currText;
-
     private TextView BTtextView;
-
     private boolean sittingIntoCar = false;
-
     private boolean onFoot = false;
+    private ActivityRecognitionClient mActivityRecognitionClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +75,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         z = new ArrayList<>();
 
         greatestProb = (TextView) findViewById(R.id.greatestProb);
-
         sittingcarTextView = (TextView) findViewById(R.id.sittingcar_prob);
-
         currText = (TextView) findViewById(R.id.currText);
-
         BTtextView = (TextView) findViewById(R.id.BTtextView);
 
         classifier = new TensorFlowClassifier(getApplicationContext());
+
+        textToSpeech = new TextToSpeech(this, this);
+        textToSpeech.setLanguage(Locale.US);
 
         myBroadcastReceiver = new MyBroadcastReceiver();
 
@@ -92,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
 
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
@@ -108,6 +108,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mApiClient.connect();
     }
 
+    @Override
+    public void onInit(int status) {
+
+    }
+
     protected void onPause() {
         getSensorManager().unregisterListener(this);
         super.onPause();
@@ -115,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void onResume() {
         super.onResume();
-        textToSpeech.speak("Gucci Gang Gucci Gang.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+//        textToSpeech.speak("Gucci Gang Gucci Gang.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
         getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
     }
 
@@ -141,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             float[] results = classifier.predictProbabilities(toFloatArray(data));
 
-            float sittingcarValue = round(results[2], 2);
+            sittingcarValue = round(results[2]);
             sittingcarTextView.setText(Float.toString(sittingcarValue));
 
             if(greatestProbValue < sittingcarValue) {
@@ -154,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sittingIntoCar = true;
                 }
             }
+
             x.subList(0, 20).clear();
             y.subList(0, 20).clear();
             z.subList(0, 20).clear();
@@ -170,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return array;
     }
 
-    private static float round(float d, int decimalPlace) {
+    private static float round(float d) {
         BigDecimal bd = new BigDecimal(Float.toString(d));
-        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
         return bd.floatValue();
     }
 
@@ -183,6 +189,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.e( "ActivityRecogition", "hello" );
+
+        makeNoise();
+
         Intent intent = new Intent( this, ActivityRecognizedService.class );
         PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 3000, pendingIntent );
@@ -192,12 +202,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onConnectionSuspended(int i) {
 
     }
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
-
     @Override
     public void onResult(Status status) {
 
@@ -253,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
                         && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-                    java.util.Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+                    Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
                     for (BluetoothDevice device : pairedDevices) {
                         BluetoothClass bluetoothClass = device.getBluetoothClass();
                         if (bluetoothClass != null) {
@@ -261,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
 //                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
                                 BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+                                textToSpeech.speak("Connected to Car Bluetooth.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
                             }
                         }
                     }
@@ -285,7 +294,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    private void makeNoise() {
+
+    public void makeNoise() {
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
         r.play();

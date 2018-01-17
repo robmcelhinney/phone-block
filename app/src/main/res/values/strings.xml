@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MyTensorflowForHackers6</string>
+    <string name="app_name">FYPDrivingApp</string>
     <string name="activity">Activity</string>
     <string name="probability">Probability</string>
     <string name="sittingcar">Sitting Into Car</string>

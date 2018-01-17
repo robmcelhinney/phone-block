@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -24,8 +23,6 @@ public class ActivityRecognizedService extends IntentService {
     public static final String EXTRA_KEY_OUT_CONFIDENCE = "EXTRA_OUT_ACTIVITY_CONFIDENCE";
     private String extraOutAct;
     private String extraOutConf;
-
-    private NotificationManager mNotificationManager;
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
@@ -43,12 +40,10 @@ public class ActivityRecognizedService extends IntentService {
         if(ActivityRecognitionResult.hasResult(intent)){
             ActivityRecognitionResult activityRecognitionResult = ActivityRecognitionResult.extractResult(intent);
             DetectedActivity detectedActivity = activityRecognitionResult.getMostProbableActivity();
-            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
             int confidence = detectedActivity.getConfidence();
-            String recognizeActivity = getActivityName(detectedActivity);
 
-            extraOutAct = recognizeActivity;
+            extraOutAct = getActivityName(detectedActivity);
             extraOutConf = Float.toString(confidence);
 
             Intent intentResponse = new Intent();
