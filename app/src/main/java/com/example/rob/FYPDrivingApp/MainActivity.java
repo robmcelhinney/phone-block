@@ -27,17 +27,14 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.Timer;
+import java.util.*;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener,
         TextToSpeech.OnInitListener, GoogleApiClient.ConnectionCallbacks,
@@ -55,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static List<Float> y;
     private static List<Float> z;
     private TextToSpeech textToSpeech;
-    private float[] results;
     private TensorFlowClassifier classifier;
 
     private TextView greatestProb;
@@ -63,16 +59,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float sittingcarValue = 0;
 
     private float greatestProbValue = 0;
-
     private TextView sittingcarTextView;
-
     private TextView currText;
-
     private TextView BTtextView;
-
     private boolean sittingIntoCar = false;
-
     private boolean onFoot = false;
+    private ActivityRecognitionClient mActivityRecognitionClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,11 +75,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         z = new ArrayList<>();
 
         greatestProb = (TextView) findViewById(R.id.greatestProb);
-
         sittingcarTextView = (TextView) findViewById(R.id.sittingcar_prob);
-
         currText = (TextView) findViewById(R.id.currText);
-
         BTtextView = (TextView) findViewById(R.id.BTtextView);
 
         classifier = new TensorFlowClassifier(getApplicationContext());
@@ -102,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
 
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
@@ -120,27 +110,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onInit(int status) {
-        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                if (results == null || results.length == 0) {
-//                    return;
-//                }
-//                float max = -1;
-//                int idx = -1;
-//                for (int i = 0; i < results.length; i++) {
-//                    if (results[i] > max) {
-//                        idx = i;
-//                        max = results[i];
-//                    }
-//                }
-//                if(sittingcarValue > 0.15) {
-//                    String sittingCarString = "Sitting into Car is" + sittingcarValue;
-//                    textToSpeech.speak(sittingCarString, TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-//                }
-//            }
-//        }, 2000, 5000);
+
     }
 
     protected void onPause() {
@@ -150,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     protected void onResume() {
         super.onResume();
-        textToSpeech.speak("Gucci Gang Gucci Gang.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+//        textToSpeech.speak("Gucci Gang Gucci Gang.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
         getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
     }
 
@@ -174,9 +144,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             data.addAll(y);
             data.addAll(z);
 
-            results = classifier.predictProbabilities(toFloatArray(data));
+            float[] results = classifier.predictProbabilities(toFloatArray(data));
 
-            sittingcarValue = round(results[2], 2);
+            sittingcarValue = round(results[2]);
             sittingcarTextView.setText(Float.toString(sittingcarValue));
 
             if(greatestProbValue < sittingcarValue) {
@@ -189,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sittingIntoCar = true;
                 }
             }
+
             x.subList(0, 20).clear();
             y.subList(0, 20).clear();
             z.subList(0, 20).clear();
@@ -205,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return array;
     }
 
-    private static float round(float d, int decimalPlace) {
+    private static float round(float d) {
         BigDecimal bd = new BigDecimal(Float.toString(d));
-        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
         return bd.floatValue();
     }
 
@@ -215,24 +186,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return (SensorManager) getSystemService(SENSOR_SERVICE);
     }
 
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.e( "ActivityRecogition", "hello" );
+
+        makeNoise();
+
         Intent intent = new Intent( this, ActivityRecognizedService.class );
-        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 3000, pendingIntent );
+        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );;
+        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
 
     }
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
-
     @Override
     public void onResult(Status status) {
 
@@ -255,7 +227,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float conf = Float.parseFloat(confidence);
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
                 try {
-                    doDisturb();
                     makeNoise();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -270,7 +241,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             else {
                 if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar && mNotificationManager.isNotificationPolicyAccessGranted()) {
-                    doNotDisturb();
+                    if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
+//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+
+
+
+                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+
+//                        mNotificationManager.setNotificationPolicy(NotificationManager.IMPORTANCE_MIN);
+
+
+
+                        textToSpeech.speak("Turning on Do not Disturb as I think you're driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+                    }
                 }
                 if (onFoot) {
                     onPause();
@@ -284,39 +267,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
             //Testing Bluetooth
-            if (activity.equalsIgnoreCase("IN_VEHICLE")){
+            if (activity.equalsIgnoreCase("STILL") || activity.equalsIgnoreCase("IN_VEHICLE")){
                 BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
                         && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-                    java.util.Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+                    Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
                     for (BluetoothDevice device : pairedDevices) {
                         BluetoothClass bluetoothClass = device.getBluetoothClass();
                         if (bluetoothClass != null) {
                             int deviceClass = bluetoothClass.getDeviceClass();
                             if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
                                 BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+                                textToSpeech.speak("Connected to Car Bluetooth.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
                             }
                         }
                     }
                 }
             }
-        }
-    }
-
-    private void doNotDisturb() {
-        if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            textToSpeech.speak("Turning on Do not Disturb as I think you're driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-        }
-    }
-
-    private void doDisturb() {
-        if (mNotificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-//                        mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            textToSpeech.speak("Turning off Do not Disturb as I think you're no longer driving a car.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
         }
     }
 
