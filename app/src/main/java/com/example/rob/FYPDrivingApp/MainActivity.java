@@ -27,11 +27,11 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.Timer;
+
+import java.util.*;
+//import java.util.ArrayList;
+//import java.util.List;
+//import java.util.Random;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -39,15 +39,11 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener,
-        TextToSpeech.OnInitListener, GoogleApiClient.ConnectionCallbacks,
+public class MainActivity extends AppCompatActivity implements SensorEventListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status>
 {
-
-    public GoogleApiClient mApiClient;
-
+    private GoogleApiClient mApiClient;
     private NotificationManager mNotificationManager;
-
     private MyBroadcastReceiver myBroadcastReceiver;
 
     private static final int N_SAMPLES = 200;
@@ -55,12 +51,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static List<Float> y;
     private static List<Float> z;
     private TextToSpeech textToSpeech;
-    private float[] results;
     private TensorFlowClassifier classifier;
 
     private TextView greatestProb;
-
-    private float sittingcarValue = 0;
 
     private float greatestProbValue = 0;
 
@@ -92,9 +85,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         classifier = new TensorFlowClassifier(getApplicationContext());
 
-        textToSpeech = new TextToSpeech(this, this);
-        textToSpeech.setLanguage(Locale.US);
-
         myBroadcastReceiver = new MyBroadcastReceiver();
 
         //register BroadcastReceiver
@@ -116,31 +106,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 .build();
 
         mApiClient.connect();
-    }
-
-    @Override
-    public void onInit(int status) {
-        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                if (results == null || results.length == 0) {
-//                    return;
-//                }
-//                float max = -1;
-//                int idx = -1;
-//                for (int i = 0; i < results.length; i++) {
-//                    if (results[i] > max) {
-//                        idx = i;
-//                        max = results[i];
-//                    }
-//                }
-//                if(sittingcarValue > 0.15) {
-//                    String sittingCarString = "Sitting into Car is" + sittingcarValue;
-//                    textToSpeech.speak(sittingCarString, TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-//                }
-//            }
-//        }, 2000, 5000);
     }
 
     protected void onPause() {
@@ -174,9 +139,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             data.addAll(y);
             data.addAll(z);
 
-            results = classifier.predictProbabilities(toFloatArray(data));
+            float[] results = classifier.predictProbabilities(toFloatArray(data));
 
-            sittingcarValue = round(results[2], 2);
+            float sittingcarValue = round(results[2], 2);
             sittingcarTextView.setText(Float.toString(sittingcarValue));
 
             if(greatestProbValue < sittingcarValue) {
@@ -320,8 +285,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-
-    public void makeNoise() {
+    private void makeNoise() {
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
         r.play();
