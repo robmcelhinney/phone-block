@@ -54,11 +54,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextToSpeech textToSpeech;
     private TensorFlowClassifier classifier;
 
-    private TextView greatestProb;
-
     private float sittingcarValue = 0;
-
     private float greatestProbValue = 0;
+
+    private TextView greatestProb;
     private TextView sittingcarTextView;
     private TextView currText;
     private TextView BTtextView;
