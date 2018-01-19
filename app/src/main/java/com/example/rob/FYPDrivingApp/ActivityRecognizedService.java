@@ -21,14 +21,14 @@ public class ActivityRecognizedService extends IntentService {
     public static final String ACTION_ActivityRecognizedService = "com.example.androidintentservice.RESPONSE";
     public static final String EXTRA_KEY_OUT_ACTIVITY = "EXTRA_OUT_ACTIVITY";
     public static final String EXTRA_KEY_OUT_CONFIDENCE = "EXTRA_OUT_ACTIVITY_CONFIDENCE";
-    String extraOutAct;
-    String extraOutConf;
+    private String extraOutAct;
+    private String extraOutConf;
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
     }
 
-    Handler mHandler;
+    private Handler mHandler;
 
     public void onCreate() {
         super.onCreate();
