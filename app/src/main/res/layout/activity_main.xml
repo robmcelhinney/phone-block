@@ -16,20 +16,19 @@
         android:id="@+id/textView2" />
 
     <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/tableLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#ededed"
-        android:padding="10dp"
-        tools:context="io.github.introml.activityrecognition.MainActivity"
-        android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:id="@+id/tableLayout">
+        android:layout_alignParentTop="true"
+        android:background="#ededed"
+        android:clipToPadding="false">
 
         <TableRow
             android:id="@+id/title_row"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="22dp"
+            android:padding="5dp"
             android:textAlignment="center">
 
             <TextView
@@ -37,7 +36,7 @@
                 android:layout_weight="1"
                 android:text="@string/activity"
                 android:textAlignment="center"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold|italic" />
 
             <TextView
@@ -45,7 +44,7 @@
                 android:layout_weight="1"
                 android:text="@string/probability"
                 android:textAlignment="center"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold|italic" />
         </TableRow>
 
@@ -53,72 +52,73 @@
             android:id="@+id/tableRow"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="22dp" >
+            android:padding="5dp">
 
             <TextView
                 android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/sittingcar"
                 android:textAlignment="center"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/sittingcar_prob"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textAlignment="center"
-                android:textSize="18sp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:textSize="18sp" />
         </TableRow>
     </TableLayout>
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Greatest Prob:"
         android:id="@+id/textView4"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/textView2" />
-
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_above="@+id/currText"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="31dp"
+        android:text="Greatest Prob:" />
+
+    <TextView
         android:id="@+id/greatestProb"
-        android:layout_marginEnd="68dp"
-        android:text="0"
-        android:layout_alignTop="@+id/textView4"
-        android:layout_alignEnd="@+id/tableLayout" />
-
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Currently"
-        android:id="@+id/CurrentlyText"
-        android:layout_alignTop="@+id/currText"
-        android:layout_toEndOf="@+id/textView2" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0"
-        android:id="@+id/currText"
-        android:layout_marginTop="27dp"
         android:layout_alignEnd="@+id/tableLayout"
-        android:layout_alignStart="@+id/greatestProb"
-        android:layout_below="@+id/textView4" />
+        android:layout_alignTop="@+id/textView4"
+        android:layout_marginEnd="68dp"
+        android:text="0" />
 
     <TextView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:text="Bluey"
+        android:id="@+id/CurrentlyText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/currText"
+        android:layout_alignBottom="@+id/currText"
+        android:layout_alignParentStart="true"
+        android:text="Currently" />
+
+    <TextView
+        android:id="@+id/currText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/BTtextView"
+        android:layout_alignParentEnd="true"
+        android:layout_alignStart="@+id/greatestProb"
+        android:layout_marginBottom="31dp"
+        android:text="0" />
+
+    <TextView
         android:id="@+id/BTtextView"
-        android:layout_marginTop="48dp"
-        android:layout_below="@+id/CurrentlyText"
-        android:layout_alignEnd="@+id/currText"
-        android:layout_toEndOf="@+id/CurrentlyText"
-        android:layout_alignParentStart="true" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="26dp"
+        android:text="Bluey" />
 
 </RelativeLayout>

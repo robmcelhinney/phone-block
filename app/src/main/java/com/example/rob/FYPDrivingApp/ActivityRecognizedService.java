@@ -21,36 +21,21 @@ public class ActivityRecognizedService extends IntentService {
     public static final String ACTION_ActivityRecognizedService = "com.example.androidintentservice.RESPONSE";
     public static final String EXTRA_KEY_OUT_ACTIVITY = "EXTRA_OUT_ACTIVITY";
     public static final String EXTRA_KEY_OUT_CONFIDENCE = "EXTRA_OUT_ACTIVITY_CONFIDENCE";
-    private String extraOutAct;
-    private String extraOutConf;
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
     }
 
-    private Handler mHandler;
-
-    public void onCreate() {
-        super.onCreate();
-        mHandler = new Handler();
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
         if(ActivityRecognitionResult.hasResult(intent)){
-            ActivityRecognitionResult activityRecognitionResult = ActivityRecognitionResult.extractResult(intent);
-            DetectedActivity detectedActivity = activityRecognitionResult.getMostProbableActivity();
-
-            int confidence = detectedActivity.getConfidence();
-
-            extraOutAct = getActivityName(detectedActivity);
-            extraOutConf = Float.toString(confidence);
+            DetectedActivity detectedActivity = ActivityRecognitionResult.extractResult(intent).getMostProbableActivity();
 
             Intent intentResponse = new Intent();
             intentResponse.setAction(ACTION_ActivityRecognizedService);
             intentResponse.addCategory(Intent.CATEGORY_DEFAULT);
-            intentResponse.putExtra(EXTRA_KEY_OUT_ACTIVITY, extraOutAct);
-            intentResponse.putExtra(EXTRA_KEY_OUT_CONFIDENCE, extraOutConf);
+            intentResponse.putExtra(EXTRA_KEY_OUT_ACTIVITY, getActivityName(detectedActivity));
+            intentResponse.putExtra(EXTRA_KEY_OUT_CONFIDENCE, Float.toString(detectedActivity.getConfidence()));
             sendBroadcast(intentResponse);
         }
     }
