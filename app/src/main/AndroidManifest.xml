@@ -25,6 +25,9 @@
         </activity>
 
         <service android:name="com.example.rob.FYPDrivingApp.ActivityRecognizedService" />
+        <service android:name=".ChangeDNDService"
+            android:exported="false">
+        </service>
     </application>
 
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />

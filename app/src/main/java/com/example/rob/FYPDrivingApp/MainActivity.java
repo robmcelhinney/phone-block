@@ -13,10 +13,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -30,6 +32,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import java.math.BigDecimal;
@@ -71,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean onFoot = false;
     private int prevNotificationFilter;
 
+    private int notificationId = 1;
+
     private ActivityRecognitionClient mActivityRecognitionClient;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -101,6 +106,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
 
+
+        startDNDService();
+
+        startUtiliesService();
+
+//        BroadcastReceiver doNotDisturbBroadcastReceiver = new doNotDisturbBroadcastReceiver();
+//        IntentFilter intentChangingDND = new IntentFilter();
+//        intentChangingDND.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
+//        registerReceiver(doNotDisturbBroadcastReceiver, intentChangingDND);
+
+
         mActivityRecognitionClient = new ActivityRecognitionClient(this);
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -120,20 +136,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
+    private void startUtiliesService() {
+        Intent intent = new Intent(this, UtilitiesService.class);
+        startService(intent);
+    }
+
     @Override
     public void onInit(int status) {
 
     }
 
-    protected void onPause() {
-        getSensorManager().unregisterListener(this);
-        super.onPause();
-    }
-
-    protected void onResume() {
-        super.onResume();
-        getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
-    }
+//    protected void onPause() {
+//        getSensorManager().unregisterListener(this);
+//        super.onPause();
+//    }
+//
+//    protected void onResume() {
+//        super.onResume();
+//        getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+//    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -169,10 +190,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //End deletion.
 
 
-
             if(sittingcarValue > 0.85){
                 String sittingCarString = "Sitting into car is" + sittingcarValue;
-//                textToSpeech.speak(sittingCarString, TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
                 sittingIntoCar = true;
             }
 
@@ -222,136 +241,144 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //un-register BroadcastReceiver
-        unregisterReceiver(myBroadcastReceiver);
-    }
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        //un-register BroadcastReceiver
+//        unregisterReceiver(myBroadcastReceiver);
+//    }
 
-    // Receiving data back from ActivityRecognizedService
-    // Receives the activity and confidence
-    public class MyBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
-            String confidence = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE);
-            float conf = Float.parseFloat(confidence);
+//    // Receiving data back from ActivityRecognizedService
+//    // Receives the activity and confidence
+//    public class MyBroadcastReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
+//            String confidence = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE);
+//            float conf = Float.parseFloat(confidence);
+//
+//
+//            if(activity.equalsIgnoreCase("STILL")) {
+//                doNotDisturb();
+//            }
+//
+//
+//            if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
+//                makeNoise();
+//
+//                if (sittingIntoCar){sittingIntoCar = false;}
+//
+//                if (!onFoot) {
+//                    onResume();
+//                    onFoot = true;
+//                }
+//
+//                doNotDisturb();
+//            }
+//            else {
+//                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar) {
+//                    doNotDisturb();
+//                }
+//                if (onFoot) {
+//                    onPause();
+//                    onFoot = false;
+//                }
+//            }
+//            currText.setText(activity);
+//
+//
+//            //Testing Bluetooth in Car.
+//            if (activity.equalsIgnoreCase("IN_VEHICLE")){
+//                if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
+//                        && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
+//                    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+//                        BluetoothClass bluetoothClass = device.getBluetoothClass();
+//                        if (bluetoothClass != null) {
+//                            int deviceClass = bluetoothClass.getDeviceClass();
+//                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
+////                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
+//                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+//                                textToSpeech.speak("Connected to Car Bluetooth.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+//                                doNotDisturb();
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
+//    public class doNotDisturbBroadcastReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            if(intent.getAction().equals((NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))) {
+//                NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+//                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY && active) {
+//                    cancelNotification(getApplicationContext(), MyUtilities.notifyId);
+//                    active = false;
+//                }
+//            }
+//        }
+//    }
 
+//    private void doNotDisturb() {
+//        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
+//            prevNotificationFilter = mNotificationManager.getCurrentInterruptionFilter();
+//
+//            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+//            textToSpeech.speak("Turning on Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+//
+//            drivingNotification();
+//
+//            MyUtilities.setActive(true);
+//        }
+//    }
+//
+//    private void doDisturb() {
+//        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
+////            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+//
+//            // sets interruption filter to what it used to be rather than always turning it off.
+//            mNotificationManager.setInterruptionFilter(prevNotificationFilter);
+//            textToSpeech.speak("Turning off Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+//
+//            MyUtilities.setActive(false);
+//        }
+//    }
 
+//    public void makeNoise() {
+//        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+//        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+//        r.play();
+//    }
 
-
-
-
-            if(activity.equalsIgnoreCase("STILL")) {
-                doNotDisturb();
-            }
-
-
-
-
-
-
-
-
-            if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
-                makeNoise();
-
-                if (sittingIntoCar){sittingIntoCar = false;}
-
-                if (!onFoot) {
-                    onResume();
-                    onFoot = true;
-                }
-            }
-            else {
-                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar) {
-                    doNotDisturb();
-                }
-                if (onFoot) {
-                    onPause();
-                    onFoot = false;
-                }
-            }
-            currText.setText(activity);
-
-
-            //Testing Bluetooth in Car.
-            if (activity.equalsIgnoreCase("IN_VEHICLE")){
-                if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
-                        && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-                    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
-                        BluetoothClass bluetoothClass = device.getBluetoothClass();
-                        if (bluetoothClass != null) {
-                            int deviceClass = bluetoothClass.getDeviceClass();
-                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
-                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-                                textToSpeech.speak("Connected to Car Bluetooth.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-                                doNotDisturb();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void doNotDisturb() {
-        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-            prevNotificationFilter = mNotificationManager.getCurrentInterruptionFilter();
-
-            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            textToSpeech.speak("Turning on Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-
-            drivingNotification();
-        }
-    }
-
-    private void doDisturb() {
-        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-//            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-
-            // sets interruption filter to what it used to be rather than always turning it off.
-            mNotificationManager.setInterruptionFilter(prevNotificationFilter);
-            textToSpeech.speak("Turning off Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-        }
-    }
-
-    public void makeNoise() {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-        r.play();
-    }
-
-    private void drivingNotification() {
-        int notificationId = 0;
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(this);
-        notification.setContentText("Do not Disturb Enabled as Driving.");
-        notification.setSmallIcon( R.mipmap.ic_launcher );
-        notification.setContentTitle( getString( R.string.app_name ) );
-
-        notification.setVisibility(Notification.VISIBILITY_PUBLIC);
-
-        notification.setColor(ContextCompat.getColor(getApplicationContext(), R.color.cast_expanded_controller_ad_container_white_stripe_color));
-
-        Intent intent = new Intent( this, MainActivity.class );
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("disable", true);
-        intent.putExtra("notification_id", notificationId);
-        PendingIntent disableIntent = PendingIntent.getActivity( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        notification.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Not driving", disableIntent);
-
-        NotificationManager notificationService = (NotificationManager)this.getSystemService(NOTIFICATION_SERVICE);
-        notificationService.notify(0, notification.build());
-    }
+//    private void drivingNotification() {
+//        int notificationId = 0;
+//        NotificationCompat.Builder notification = new NotificationCompat.Builder(this);
+//        notification.setContentText("Do not Disturb Enabled as Driving.");
+//        notification.setSmallIcon( R.mipmap.ic_launcher );
+//        notification.setContentTitle( getString( R.string.app_name ) );
+//
+//        notification.setVisibility(Notification.VISIBILITY_PUBLIC);
+//
+//        notification.setColor(ContextCompat.getColor(getApplicationContext(), R.color.cast_expanded_controller_ad_container_white_stripe_color));
+//
+//        Intent intent = new Intent( this, MainActivity.class );
+//        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//        intent.putExtra("disable", true);
+//        intent.putExtra("notification_id", notificationId);
+//        PendingIntent disableIntent = PendingIntent.getActivity( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+//        notification.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Not driving", disableIntent);
+//
+//        NotificationManager notificationService = (NotificationManager)this.getSystemService(NOTIFICATION_SERVICE);
+//        notificationService.notify(0, notification.build());
+//    }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if(intent.hasExtra("disable")) {
-            doDisturb();
+            DisturbService.doDisturb();
 
             NotificationManager notificationManager =
                     (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -366,6 +393,54 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public static void cancelNotification(Context context, int notifyId) {
         NotificationManager notiMgr = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notiMgr.cancel(notifyId);
+        notiMgr.cancel(MyUtilities.notifyId);
     }
+
+
+
+    public void startDNDService() {
+        Intent intent = new Intent(this, ChangeDNDService.class);
+        startService(intent);
+    }
+
+    public void stopDNDService() {
+        Intent intent = new Intent(this, ChangeDNDService.class);
+        stopService(intent);
+    }
+
+
+
+
+
+
+
+
+
+    private void displayNotification(String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setContentText(message);
+        builder.setSmallIcon( R.mipmap.ic_launcher );
+        builder.setContentTitle( getString( R.string.app_name ) );
+        NotificationManagerCompat.from(this).notify(notificationId, builder.build());
+        notificationId++;
+    }
+
+    public void saveInfo() {
+        SharedPreferences sharedPref = getSharedPreferences("activeInfo", Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean("activeBool", MyUtilities.isActive());
+
+        editor.apply();
+    }
+
+
+
+
+
+
+
+
+
+
 }
