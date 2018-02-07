@@ -3,4 +3,7 @@
     <string name="activity">Activity</string>
     <string name="probability">Probability</string>
     <string name="sittingcar">Sitting Into Car</string>
+    <string name="contentDescKey">Image of key to denote permissions are needed.</string>
+    <string name="SplashHeader">Permissions are Needed</string>
+    <string name="skipUnderline"><u>skip</u></string>
 </resources>

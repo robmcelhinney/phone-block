@@ -2,21 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.rob.FYPDrivingApp">
 
-    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="true" />
 
     <supports-screens
         android:normalScreens="true"
         android:smallScreens="true" />
 
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:allowBackup="true"
+        android:extractNativeLibs="false"
+        android:fullBackupContent="@xml/backup_descriptor"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:extractNativeLibs="false"
-        android:fullBackupContent="@xml/backup_descriptor">
-        <activity android:name="com.example.rob.FYPDrivingApp.MainActivity">
+        android:theme="@style/AppTheme">
+        <activity android:name="MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,17 +35,14 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.example.rob.FYPDrivingApp.ActivityRecognizedService" />
-        <service android:name=".ChangeDNDService"
-            android:exported="false">
-        </service>
+        <service android:name="ActivityRecognizedService" />
+        <service
+            android:name="ChangeDNDService"
+            android:exported="false" />
+        <service android:name="DetectDrivingService" />
+        <service android:name="DisturbService" />
+
+        <activity android:name="PermissionsSplashActivity" />
     </application>
 
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
-    <uses-permission android:name="android.permission.BLUETOOTH" />
 </manifest>

@@ -31,4 +31,28 @@ public class UtilitiesService extends Service {
     public void onDestroy() {
         super.onDestroy();
     }
+
+    public static boolean isActive() {
+        return active;
+    }
+
+    public static void setActive(boolean newActive) {
+        active = newActive;
+    }
+
+    private static boolean active = false;
+
+    public static int getNotifyId() {
+        return notifyId;
+    }
+
+    private static int notifyId = 0;
+
+    public static boolean isUserNotDriving() { return userNotDriving; }
+
+    public static void setUserNotDriving(boolean newUserNotDriving) {
+        userNotDriving = newUserNotDriving;
+    }
+
+    private static boolean userNotDriving = false;
 }

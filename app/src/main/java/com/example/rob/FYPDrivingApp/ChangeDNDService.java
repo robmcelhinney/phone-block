@@ -12,6 +12,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
+import java.util.Objects;
+
 /**
  * Created by Rob on 25/01/2018.
  */
@@ -48,14 +50,15 @@ public class ChangeDNDService extends Service {
     public class doNotDisturbBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals((NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))) {
+            if(Objects.equals(intent.getAction(), (NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))) {
 
-                displayNotification("isActive? " + MyUtilities.isActive());
+//                displayNotification("isActive? " + UtilitiesService.isActive());
 
                 NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY && MyUtilities.isActive()) {
-                    cancelNotification(getApplicationContext(), MyUtilities.getNotifyId());
-                    MyUtilities.setActive(false);
+                assert mNotificationManager != null;
+                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY && UtilitiesService.isActive()) {
+                    cancelNotification(getApplicationContext(), UtilitiesService.getNotifyId());
+                    UtilitiesService.setActive(false);
                 }
             }
         }
@@ -63,19 +66,15 @@ public class ChangeDNDService extends Service {
 
     public static void cancelNotification(Context context, int notifyId) {
         NotificationManager notiMgr = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        assert notiMgr != null;
         notiMgr.cancel(notifyId);
     }
-
-
 
     public void displayData() {
         SharedPreferences sharedPref = getSharedPreferences("activeInfo", Context.MODE_PRIVATE);
 
         Boolean active = sharedPref.getBoolean("activeBool", false);
     }
-
-
-
 
     private void displayNotification(String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);

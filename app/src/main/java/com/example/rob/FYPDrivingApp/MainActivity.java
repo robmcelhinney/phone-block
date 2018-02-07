@@ -22,6 +22,7 @@ import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
@@ -29,11 +30,17 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -45,95 +52,158 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener,
-        TextToSpeech.OnInitListener, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status>
-{
-
-    public GoogleApiClient mApiClient;
-
-    private NotificationManager mNotificationManager;
-
-    private MyBroadcastReceiver myBroadcastReceiver;
-
-    private static final int N_SAMPLES = 200;
-    private static List<Float> x;
-    private static List<Float> y;
-    private static List<Float> z;
+public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
+    //    private NotificationManager mNotificationManager;
     private TextToSpeech textToSpeech;
-    private TensorFlowClassifier classifier;
-
-    private float sittingcarValue = 0;
-    private float greatestProbValue = 0;
 
     private TextView greatestProb;
     private TextView sittingcarTextView;
     private TextView currText;
     private TextView BTtextView;
-    private boolean sittingIntoCar = false;
-    private boolean onFoot = false;
-    private int prevNotificationFilter;
+
+    private Switch switchPant;
+    private Switch switchShirt;
+    private Switch switchDetection;
+    private Switch switchBT;
+
+    private ToggleButton toggleButtonActive;
 
     private int notificationId = 1;
 
-    private ActivityRecognitionClient mActivityRecognitionClient;
-
-    private BluetoothAdapter mBluetoothAdapter;
+    public static final String MY_PREFS_NAME = "MyPrefsFile";
+    private SharedPreferences settings;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        x = new ArrayList<>();
-        y = new ArrayList<>();
-        z = new ArrayList<>();
+
+        startDisturbService();
+
+        startDNDService();
+
+        startUtiliesService();
+
+        settings = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
+        editor = settings.edit();
+
+
+        // Splash Screen first time launch
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        boolean previouslyStarted = prefs.getBoolean("pref_previously_started", false);
+        if (!previouslyStarted) {
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putBoolean("pref_previously_started", Boolean.TRUE);
+            edit.commit();
+            startActivity(new Intent(MainActivity.this, PermissionsSplashActivity.class));
+        }
+
 
         greatestProb = (TextView) findViewById(R.id.greatestProb);
         sittingcarTextView = (TextView) findViewById(R.id.sittingcar_prob);
         currText = (TextView) findViewById(R.id.currText);
         BTtextView = (TextView) findViewById(R.id.BTtextView);
 
-        classifier = new TensorFlowClassifier(getApplicationContext());
-
         textToSpeech = new TextToSpeech(this, this);
         textToSpeech.setLanguage(Locale.US);
 
-        myBroadcastReceiver = new MyBroadcastReceiver();
+        toggleButtonActive = (ToggleButton) findViewById(R.id.toggleButtonActive);
+        toggleButtonActive.setChecked(settings.getBoolean("buttonActive", false));
+        toggleButtonActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    DisturbService.doNotDisturb();
+                } else {
+                    DisturbService.userSelectedDoDisturb();
+                }
+            }
+        });
 
+        switchPant = (Switch) findViewById(R.id.switchPant);
+//        switchPant.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                if(isChecked) {
+//                    startDetectDrivingService();
+//                }
+//                else {
+//                    stopDetectDrivingService();
+//                }
+//            }
+//
+//        });
+
+        switchShirt = (Switch) findViewById(R.id.switchShirt);
+/*        switchShirt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked) {
+                }
+                else {
+                }
+            }
+
+        });*/
+
+
+        switchDetection = (Switch) findViewById(R.id.switchDetection);
+        switchDetection.setChecked(settings.getBoolean("switchkey", false));
+        switchDetection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (isChecked) {
+                startDetectDrivingService();
+                editor.putBoolean("switchkey", true);
+            } else {
+                stopDetectDrivingService();
+                editor.putBoolean("switchkey", false);
+            }
+            editor.commit();
+            }
+        });
+
+        switchBT = (Switch) findViewById(R.id.switchBT);
+        switchBT.setChecked(settings.getBoolean("switchBT", false));
+        switchBT.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (isChecked) {
+                editor.putBoolean("switchBT", true);
+            } else {
+                editor.putBoolean("switchBT", false);
+            }
+            editor.commit();
+            }
+        });
+
+//        myBroadcastReceiver = new MyBroadcastReceiver();
         //register BroadcastReceiver for ActivityRecognizedService
-        IntentFilter intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
-        intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
-        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(myBroadcastReceiver, intentFilter);
+//        IntentFilter intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
+//        intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
+//        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+//        registerReceiver(myBroadcastReceiver, intentFilter);
 
-
-        startDNDService();
-
-        startUtiliesService();
-
-//        BroadcastReceiver doNotDisturbBroadcastReceiver = new doNotDisturbBroadcastReceiver();
-//        IntentFilter intentChangingDND = new IntentFilter();
-//        intentChangingDND.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
-//        registerReceiver(doNotDisturbBroadcastReceiver, intentChangingDND);
-
-
-        mActivityRecognitionClient = new ActivityRecognitionClient(this);
-
-        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-            startActivity(intent);
+        if (switchDetection.isChecked()) {
+            startDetectDrivingService();
         }
 
-        mApiClient = new GoogleApiClient.Builder(this)
-                .addApi(ActivityRecognition.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
 
-        mApiClient.connect();
+//        // checks if user gave permission to change notification policy. If not, then launch
+//        // settings to get them to give permission.
+//        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+//            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+//            startActivity(intent);
+//        }
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, new IntentFilter("intentKey"));
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiverToggleButton, new IntentFilter("intentToggleButton"));
     }
 
     private void startUtiliesService() {
@@ -141,75 +211,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startService(intent);
     }
 
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        // Get extra data included in the Intent
+        String message = intent.getStringExtra("text");
+        if (intent.hasExtra("BTText")) {
+            BTtextView.setText(message);
+        } else if (intent.hasExtra("currText")) {
+            currText.setText(message);
+        } else if (intent.hasExtra("greatestProb")) {
+            greatestProb.setText(message);
+        } else if (intent.hasExtra("sittingCarText")) {
+            sittingcarTextView.setText(message);
+        }
+        }
+    };
+
+    private BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        // Get extra data included in the Intent
+        toggleButtonActive.setChecked(intent.getBooleanExtra("valueBool", false));
+        editor.putBoolean("buttonActive", Boolean.TRUE);
+        editor.commit();
+        }
+    };
+
+
     @Override
     public void onInit(int status) {
 
     }
 
-//    protected void onPause() {
-//        getSensorManager().unregisterListener(this);
-//        super.onPause();
-//    }
-//
-//    protected void onResume() {
-//        super.onResume();
-//        getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
-//    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        activityPrediction();
-        x.add(event.values[0]);
-        y.add(event.values[1]);
-        z.add(event.values[2]);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }
-
-    private void activityPrediction() {
-        if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
-            List<Float> data = new ArrayList<>();
-            data.addAll(x);
-            data.addAll(y);
-            data.addAll(z);
-
-            float[] results = classifier.predictProbabilities(toFloatArray(data));
-
-            sittingcarValue = round(results[2]);
-            sittingcarTextView.setText(Float.toString(sittingcarValue));
-
-
-            // Will Delete further down the line.
-            if(greatestProbValue < sittingcarValue) {
-                greatestProbValue = sittingcarValue;
-                greatestProb.setText(String.valueOf(greatestProbValue));
-            }
-            //End deletion.
-
-
-            if(sittingcarValue > 0.85){
-                String sittingCarString = "Sitting into car is" + sittingcarValue;
-                sittingIntoCar = true;
-            }
-
-            x.subList(0, 20).clear();
-            y.subList(0, 20).clear();
-            z.subList(0, 20).clear();
-        }
-    }
-
-    private float[] toFloatArray(List<Float> list) {
-        int i = 0;
-        float[] array = new float[list.size()];
-
-        for (Float f : list) {
-            array[i++] = (f != null ? f : Float.NaN);
-        }
-        return array;
-    }
 
     private static float round(float d) {
         BigDecimal bd = new BigDecimal(Float.toString(d));
@@ -222,181 +256,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        Intent intent = new Intent( this, ActivityRecognizedService.class );
-        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
-    }
+    protected void onDestroy() {
+        super.onDestroy();
+        if (textToSpeech != null) {
 
-    @Override
-    public void onConnectionSuspended(int i) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
 
-    }
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-    }
-    @Override
-    public void onResult(Status status) {
-
-    }
-
-//    @Override
-//    protected void onDestroy() {
-//        super.onDestroy();
-//        //un-register BroadcastReceiver
+        //un-register BroadcastReceiver
 //        unregisterReceiver(myBroadcastReceiver);
-//    }
-
-//    // Receiving data back from ActivityRecognizedService
-//    // Receives the activity and confidence
-//    public class MyBroadcastReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
-//            String confidence = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE);
-//            float conf = Float.parseFloat(confidence);
-//
-//
-//            if(activity.equalsIgnoreCase("STILL")) {
-//                doNotDisturb();
-//            }
-//
-//
-//            if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
-//                makeNoise();
-//
-//                if (sittingIntoCar){sittingIntoCar = false;}
-//
-//                if (!onFoot) {
-//                    onResume();
-//                    onFoot = true;
-//                }
-//
-//                doNotDisturb();
-//            }
-//            else {
-//                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar) {
-//                    doNotDisturb();
-//                }
-//                if (onFoot) {
-//                    onPause();
-//                    onFoot = false;
-//                }
-//            }
-//            currText.setText(activity);
-//
-//
-//            //Testing Bluetooth in Car.
-//            if (activity.equalsIgnoreCase("IN_VEHICLE")){
-//                if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
-//                        && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-//                    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
-//                        BluetoothClass bluetoothClass = device.getBluetoothClass();
-//                        if (bluetoothClass != null) {
-//                            int deviceClass = bluetoothClass.getDeviceClass();
-//                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-////                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
-//                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-//                                textToSpeech.speak("Connected to Car Bluetooth.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-//                                doNotDisturb();
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-//    public class doNotDisturbBroadcastReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            if(intent.getAction().equals((NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))) {
-//                NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY && active) {
-//                    cancelNotification(getApplicationContext(), MyUtilities.notifyId);
-//                    active = false;
-//                }
-//            }
-//        }
-//    }
-
-//    private void doNotDisturb() {
-//        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-//            prevNotificationFilter = mNotificationManager.getCurrentInterruptionFilter();
-//
-//            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-//            textToSpeech.speak("Turning on Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-//
-//            drivingNotification();
-//
-//            MyUtilities.setActive(true);
-//        }
-//    }
-//
-//    private void doDisturb() {
-//        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-////            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-//
-//            // sets interruption filter to what it used to be rather than always turning it off.
-//            mNotificationManager.setInterruptionFilter(prevNotificationFilter);
-//            textToSpeech.speak("Turning off Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
-//
-//            MyUtilities.setActive(false);
-//        }
-//    }
-
-//    public void makeNoise() {
-//        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-//        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-//        r.play();
-//    }
-
-//    private void drivingNotification() {
-//        int notificationId = 0;
-//        NotificationCompat.Builder notification = new NotificationCompat.Builder(this);
-//        notification.setContentText("Do not Disturb Enabled as Driving.");
-//        notification.setSmallIcon( R.mipmap.ic_launcher );
-//        notification.setContentTitle( getString( R.string.app_name ) );
-//
-//        notification.setVisibility(Notification.VISIBILITY_PUBLIC);
-//
-//        notification.setColor(ContextCompat.getColor(getApplicationContext(), R.color.cast_expanded_controller_ad_container_white_stripe_color));
-//
-//        Intent intent = new Intent( this, MainActivity.class );
-//        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-//        intent.putExtra("disable", true);
-//        intent.putExtra("notification_id", notificationId);
-//        PendingIntent disableIntent = PendingIntent.getActivity( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-//        notification.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Not driving", disableIntent);
-//
-//        NotificationManager notificationService = (NotificationManager)this.getSystemService(NOTIFICATION_SERVICE);
-//        notificationService.notify(0, notification.build());
-//    }
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if(intent.hasExtra("disable")) {
-            DisturbService.doDisturb();
-
-            NotificationManager notificationManager =
-                    (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.cancel(intent.getIntExtra("notification_id", 0));
-
-
-            /*Create a boolean that will stop thinking you're driving. What if the passenger is
-            connected to the car's bluetooth? They click 'not driving' and it's automatically set again.*/
-        }
     }
-
-
-    public static void cancelNotification(Context context, int notifyId) {
-        NotificationManager notiMgr = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notiMgr.cancel(MyUtilities.notifyId);
-    }
-
-
 
     public void startDNDService() {
         Intent intent = new Intent(this, ChangeDNDService.class);
@@ -408,19 +284,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stopService(intent);
     }
 
+    public void startDetectDrivingService() {
+        Intent intent = new Intent(this, DetectDrivingService.class);
+        startService(intent);
+    }
 
+    public void stopDetectDrivingService() {
+        Intent intent = new Intent(this, DetectDrivingService.class);
+        stopService(intent);
+    }
 
+    public void startDisturbService() {
+        Intent intent = new Intent(this, DisturbService.class);
+        startService(intent);
+    }
 
-
-
-
+    public void stopDisturbService() {
+        Intent intent = new Intent(this, DisturbService.class);
+        stopService(intent);
+    }
 
 
     private void displayNotification(String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setContentText(message);
-        builder.setSmallIcon( R.mipmap.ic_launcher );
-        builder.setContentTitle( getString( R.string.app_name ) );
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setContentTitle(getString(R.string.app_name));
         NotificationManagerCompat.from(this).notify(notificationId, builder.build());
         notificationId++;
     }
@@ -429,18 +318,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         SharedPreferences sharedPref = getSharedPreferences("activeInfo", Context.MODE_PRIVATE);
 
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean("activeBool", MyUtilities.isActive());
+        editor.putBoolean("activeBool", UtilitiesService.isActive());
 
         editor.apply();
     }
 
-
-
-
-
-
-
-
-
-
 }
+

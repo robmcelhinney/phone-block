@@ -1,6 +1,7 @@
 package com.example.rob.FYPDrivingApp;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
@@ -10,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,9 +21,12 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -32,25 +37,37 @@ import com.google.android.gms.location.ActivityRecognitionClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.*;
 
 import static java.lang.Math.round;
+import java.math.BigDecimal;
+
+import com.google.android. gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
 
 /**
  * Created by Rob on 27/01/2018.
  */
 
-public class detectDrivingService extends Service {
+public class DetectDrivingService extends Service implements SensorEventListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
 
-    MyBroadcastReceiver myBroadcastReceiver;
+    private MyBroadcastReceiver myBroadcastReceiver;
 
     public GoogleApiClient mApiClient;
 
     private NotificationManager mNotificationManager;
 
-    private static final int N_SAMPLES = 200;
-    private static List<Float> x;
-    private static List<Float> y;
-    private static List<Float> z;
+    private final int N_SAMPLES = 200;
+    private List<Float> x;
+    private List<Float> y;
+    private List<Float> z;
+
+    private List<Float> data;
 
     private boolean sittingIntoCar = false;
     private boolean onFoot = false;
@@ -59,17 +76,48 @@ public class detectDrivingService extends Service {
 
     private BluetoothAdapter mBluetoothAdapter;
 
+    private TensorFlowClassifier classifier;
+
+    private float sittingcarValue = 0;
+    private float greatestProbValue = 0;
+
+    private SharedPreferences settings;
+
+//    SharedPreferences prefs;
+//    SharedPreferences.Editor editPrefs;
+
     public void onCreate() {
         super.onCreate();
 
+        x = new ArrayList<>();
+        y = new ArrayList<>();
+        z = new ArrayList<>();
+
+        settings = getSharedPreferences(MainActivity.MY_PREFS_NAME, MODE_PRIVATE);
 
         myBroadcastReceiver = new MyBroadcastReceiver();
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         //register BroadcastReceiver for ActivityRecognizedService
         IntentFilter intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
         intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
+
+        classifier = new TensorFlowClassifier(getApplicationContext());
+
+        mActivityRecognitionClient = new ActivityRecognitionClient(getApplicationContext());
+
+        mApiClient = new GoogleApiClient.Builder(getApplicationContext())
+                .addApi(ActivityRecognition.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
+        mApiClient.connect();
+
+//        prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//        editPrefs = prefs.edit();
     }
 
     @Override
@@ -90,7 +138,40 @@ public class detectDrivingService extends Service {
         return null;
     }
 
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        activityPrediction();
+        x.add(event.values[0]);
+        y.add(event.values[1]);
+        z.add(event.values[2]);
+    }
 
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Intent intent = new Intent( getApplicationContext(), ActivityRecognizedService.class );
+        PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onResult(@NonNull Status status) {
+
+    }
 
 
     // Receiving data back from ActivityRecognizedService
@@ -104,14 +185,16 @@ public class detectDrivingService extends Service {
             float conf = Float.parseFloat(confidence);
 
 
+
+
             if(activity.equalsIgnoreCase("STILL")) {
-                DisturbService.doNotDisturb();
+//                DisturbService.doNotDisturb();
+                checkBluetooth();
             }
 
 
-            if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
-                makeNoise();
 
+            if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
                 if (sittingIntoCar){sittingIntoCar = false;}
 
                 if (!onFoot) {
@@ -119,45 +202,32 @@ public class detectDrivingService extends Service {
                     onFoot = true;
                 }
 
-                doNotDisturb();
+                if(UtilitiesService.isActive()) {
+                    DisturbService.doDisturb();
+                }
             }
             else {
-                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.9 && sittingIntoCar) {
-                    doNotDisturb();
+                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.95 && sittingIntoCar
+                        && !UtilitiesService.isActive()) {
+                    DisturbService.doNotDisturb();
                 }
                 if (onFoot) {
                     onPause();
                     onFoot = false;
                 }
             }
-            currText.setText(activity);
+            sendMessageToActivity("currText", activity);
 
 
             //Testing Bluetooth in Car.
             if (activity.equalsIgnoreCase("IN_VEHICLE")){
-                if(mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
-                        && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
-                    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
-                        BluetoothClass bluetoothClass = device.getBluetoothClass();
-                        if (bluetoothClass != null) {
-                            int deviceClass = bluetoothClass.getDeviceClass();
-                            if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
-                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-                                doNotDisturb();
-                            }
-                        }
-                    }
-                }
+                checkBluetooth();
             }
         }
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-            activityPrediction();
-            x.add(event.values[0]);
-            y.add(event.values[1]);
-            z.add(event.values[2]);
+
         }
 
         @Override
@@ -186,20 +256,46 @@ public class detectDrivingService extends Service {
         }
     }
 
-    protected void onPause() {
-        getSensorManager().unregisterListener(this);
-        super.onPause();
+    private void checkBluetooth() {
+        if(settings.getBoolean("switchBT", false) && !UtilitiesService.isUserNotDriving() && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
+                && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED) {
+            for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+                BluetoothClass bluetoothClass = device.getBluetoothClass();
+                if (bluetoothClass != null) {
+                    int deviceClass = bluetoothClass.getDeviceClass();
+                    sendMessageToActivity("BTText", deviceClass + " :( " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+                    if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO || deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) {
+//                    if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
+
+//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
+//                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
+
+                        sendMessageToActivity("BTText", deviceClass + " :)Car " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO + " :)Handsfree " + BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE);
+
+                        if(!UtilitiesService.isActive()) {
+                            DisturbService.doNotDisturb();
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    protected void onResume() {
-        super.onResume();
+    private void onPause() {
+        getSensorManager().unregisterListener(this);
+    }
+
+    private void onResume() {
         getSensorManager().registerListener(this, getSensorManager().getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
     }
 
+    private SensorManager getSensorManager() {
+        return (SensorManager) getSystemService(SENSOR_SERVICE);
+    }
 
     private void activityPrediction() {
         if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
-            List<Float> data = new ArrayList<>();
+            data = new ArrayList<>();
             data.addAll(x);
             data.addAll(y);
             data.addAll(z);
@@ -207,13 +303,15 @@ public class detectDrivingService extends Service {
             float[] results = classifier.predictProbabilities(toFloatArray(data));
 
             sittingcarValue = round(results[2]);
-            sittingcarTextView.setText(Float.toString(sittingcarValue));
+//            sittingcarTextView.setText(Float.toString(sittingcarValue));
+            sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
 
 
             // Will Delete further down the line.
             if(greatestProbValue < sittingcarValue) {
                 greatestProbValue = sittingcarValue;
-                greatestProb.setText(String.valueOf(greatestProbValue));
+//                greatestProb.setText(String.valueOf(greatestProbValue));
+                sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
             }
             //End deletion.
 
@@ -221,6 +319,7 @@ public class detectDrivingService extends Service {
             if(sittingcarValue > 0.85){
                 String sittingCarString = "Sitting into car is" + sittingcarValue;
                 sittingIntoCar = true;
+                makeNoise();
             }
 
             x.subList(0, 20).clear();
@@ -229,9 +328,26 @@ public class detectDrivingService extends Service {
         }
     }
 
+    private float[] toFloatArray(List<Float> list) {
+        int i = 0;
+        float[] array = new float[list.size()];
+
+        for (Float f : list) {
+            array[i++] = (f != null ? f : Float.NaN);
+        }
+        return array;
+    }
+
     public void makeNoise() {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-        r.play();
+        Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        rTone.play();
+    }
+
+
+    private void sendMessageToActivity(String type, String msg) {
+        Intent intent = new Intent("intentKey");
+        intent.putExtra(type, true);
+        intent.putExtra("text", msg);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
     }
 }
