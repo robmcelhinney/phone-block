@@ -115,6 +115,7 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
             }
             textToSpeech.speak("Turning off Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
 
+            DetectDrivingService.setSittingIntoCar(false);
             UtilitiesService.setActive(false);
         }
     }

@@ -40,4 +40,6 @@ dependencies {
     compile 'com.google.android.gms:play-services:11.8.0'
     testCompile 'junit:junit:4.12'
     implementation files('libs/commons-lang3-3.7.jar')
+
+    compile 'com.jaredrummler:android-processes:1.1.1'
 }

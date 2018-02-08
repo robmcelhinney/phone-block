@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private Switch switchShirt;
     private Switch switchDetection;
     private Switch switchBT;
+    private Switch switchOtherApps;
 
     private ToggleButton toggleButtonActive;
 
@@ -174,6 +175,26 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 editor.putBoolean("switchBT", true);
             } else {
                 editor.putBoolean("switchBT", false);
+            }
+            editor.commit();
+            }
+        });
+
+        switchOtherApps = (Switch) findViewById(R.id.switchOtherApps);
+        switchOtherApps.setChecked(settings.getBoolean("switchOtherApps", false));
+        switchOtherApps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (isChecked) {
+                if(Settings.canDrawOverlays(getApplicationContext())) {
+
+                }
+                else{
+                    Toast.makeText(getApplicationContext(), "No Permissions!", Toast.LENGTH_SHORT).show();
+                }
+                editor.putBoolean("switchOtherApps", true);
+            } else {
+                editor.putBoolean("switchOtherApps", false);
             }
             editor.commit();
             }

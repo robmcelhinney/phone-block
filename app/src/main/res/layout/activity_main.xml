@@ -147,11 +147,23 @@
         android:id="@+id/toggleButtonActive"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/switchDetection"
+        android:layout_below="@+id/tableLayout"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="21dp"
+        android:layout_marginTop="48dp"
         android:text="ToggleButton"
         android:textOff="Not Driving"
         android:textOn="Driving" />
+
+    <Switch
+        android:id="@+id/switchOtherApps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/switchDetection"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:textColor="@color/white"
+        android:layout_alignEnd="@+id/switchPant"
+        android:layout_alignStart="@+id/switchPant"
+        android:text="Disable Distracting Apps" />
 
 </RelativeLayout>

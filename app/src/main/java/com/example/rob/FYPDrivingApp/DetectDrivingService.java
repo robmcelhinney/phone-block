@@ -63,13 +63,24 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private NotificationManager mNotificationManager;
 
     private final int N_SAMPLES = 200;
+    private final int N_SAMPLES_TOTAL = 700;
+    private final int N_CHECKS = 20;
+
     private List<Float> x;
     private List<Float> y;
     private List<Float> z;
 
     private List<Float> data;
 
-    private boolean sittingIntoCar = false;
+    public static boolean isSittingIntoCar() {
+        return sittingIntoCar;
+    }
+
+    public static void setSittingIntoCar(boolean newSittingIntoCar) {
+        sittingIntoCar = newSittingIntoCar;
+    }
+
+    private static boolean sittingIntoCar = false;
     private boolean onFoot = false;
 
     private ActivityRecognitionClient mActivityRecognitionClient;
@@ -140,7 +151,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        activityPrediction();
         x.add(event.values[0]);
         y.add(event.values[1]);
         z.add(event.values[2]);
@@ -195,7 +205,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
 
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
-                if (sittingIntoCar){sittingIntoCar = false;}
+                if (isSittingIntoCar()){setSittingIntoCar(false);}
 
                 if (!onFoot) {
                     onResume();
@@ -207,7 +217,11 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 }
             }
             else {
-                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.95 && sittingIntoCar
+                if((activity.equalsIgnoreCase("IN_VEHICLE") || activity.equalsIgnoreCase("STILL")) && onFoot) {
+                    activityPrediction();
+                }
+
+                if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.95 && isSittingIntoCar()
                         && !UtilitiesService.isActive()) {
                     DisturbService.doNotDisturb();
                 }
@@ -294,37 +308,45 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     private void activityPrediction() {
-        if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
-            data = new ArrayList<>();
-            data.addAll(x);
-            data.addAll(y);
-            data.addAll(z);
+        if(x.size() > N_SAMPLES_TOTAL && y.size() > N_SAMPLES_TOTAL && z.size() > N_SAMPLES_TOTAL) {
+            x.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
+            y.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
+            z.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
+        }
+        if (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
+            for(int i = 0; i < x.size() / N_CHECKS; i++) {
+                data = new ArrayList<>();
+                data.addAll(x.subList(0, N_SAMPLES+1));
+                data.addAll(y.subList(0, N_SAMPLES+1));
+                data.addAll(z.subList(0, N_SAMPLES+1));
 
-            float[] results = classifier.predictProbabilities(toFloatArray(data));
+                float[] results = classifier.predictProbabilities(toFloatArray(data));
 
-            sittingcarValue = round(results[2]);
-//            sittingcarTextView.setText(Float.toString(sittingcarValue));
-            sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
+                sittingcarValue = round(results[2]);
+                sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
+
+                // Will Delete further down the line.
+                if(greatestProbValue < sittingcarValue) {
+                    greatestProbValue = sittingcarValue;
+                    sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
+                }
+                //End deletion.
 
 
-            // Will Delete further down the line.
-            if(greatestProbValue < sittingcarValue) {
-                greatestProbValue = sittingcarValue;
-//                greatestProb.setText(String.valueOf(greatestProbValue));
-                sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
+                if(sittingcarValue > 0.85){
+                    String sittingCarString = "Sitting into car is" + sittingcarValue;
+                    setSittingIntoCar(true);
+                    makeNoise();
+                    break;
+                }
+
+                x.subList(0, N_CHECKS).clear();
+                y.subList(0, N_CHECKS).clear();
+                z.subList(0, N_CHECKS).clear();
             }
-            //End deletion.
-
-
-            if(sittingcarValue > 0.85){
-                String sittingCarString = "Sitting into car is" + sittingcarValue;
-                sittingIntoCar = true;
-                makeNoise();
-            }
-
-            x.subList(0, 20).clear();
-            y.subList(0, 20).clear();
-            z.subList(0, 20).clear();
+            x.clear();
+            y.clear();
+            z.clear();
         }
     }
 
