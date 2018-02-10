@@ -1,4 +1,4 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
 /**
  * Created by Rob on 22/11/2017.
@@ -13,6 +13,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
+import com.example.rob.FYPDrivingApp.R;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
@@ -47,14 +48,12 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.ON_BICYCLE:
                 return "ON_BICYCLE";
             case DetectedActivity.STILL:
-//                displayNotification("Are you still?");
                 return "STILL";
             case DetectedActivity.TILTING:
                 return "TILTING";
             case DetectedActivity.RUNNING:
                 return "RUNNING";
             case DetectedActivity.ON_FOOT:
-//                displayNotification("Are you on foot?");
                 return "ON_FOOT";
             case DetectedActivity.WALKING:
                 return "WALKING";
@@ -62,13 +61,5 @@ public class ActivityRecognizedService extends IntentService {
                 return "UNKNOWN";
         }
         return "";
-    }
-
-    private void displayNotification(String message) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setContentText(message);
-        builder.setSmallIcon( R.mipmap.ic_launcher );
-        builder.setContentTitle( getString( R.string.app_name ) );
-        NotificationManagerCompat.from(this).notify(0, builder.build());
     }
 }

@@ -1,4 +1,4 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -18,15 +18,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
-import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,18 +32,10 @@ import com.google.android.gms.location.ActivityRecognitionClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.*;
 
 import static java.lang.Math.round;
-import java.math.BigDecimal;
 
-import com.google.android. gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityRecognitionClient;
 
 /**
  * Created by Rob on 27/01/2018.
@@ -199,7 +187,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
             if(activity.equalsIgnoreCase("STILL")) {
 //                DisturbService.doNotDisturb();
-                checkBluetooth();
+//                checkBluetooth();
             }
 
 
@@ -214,6 +202,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
                 if(UtilitiesService.isActive()) {
                     DisturbService.doDisturb();
+                }
+                if(UtilitiesService.isUserNotDriving()){
+                    UtilitiesService.setUserNotDriving(false);
                 }
             }
             else {

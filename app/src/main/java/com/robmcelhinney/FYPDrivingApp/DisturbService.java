@@ -1,20 +1,22 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
         import android.app.Notification;
         import android.app.NotificationManager;
         import android.app.PendingIntent;
         import android.app.Service;
-        import android.content.BroadcastReceiver;
         import android.content.Context;
         import android.content.Intent;
-        import android.content.IntentFilter;
+        import android.content.SharedPreferences;
+        import android.media.Ringtone;
+        import android.media.RingtoneManager;
         import android.os.IBinder;
-        import android.provider.Settings;
         import android.speech.tts.TextToSpeech;
         import android.support.annotation.Nullable;
         import android.support.v4.app.NotificationCompat;
         import android.support.v4.content.ContextCompat;
         import android.support.v4.content.LocalBroadcastManager;
+
+        import com.example.rob.FYPDrivingApp.R;
 
         import java.util.Locale;
         import java.util.Random;
@@ -38,6 +40,9 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
     private static int drivNotiId = 0;
 
+    private static SharedPreferences settings;
+    private static SharedPreferences.Editor editPrefs;
+
     public void onCreate() {
         super.onCreate();
 
@@ -50,18 +55,23 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         appName = getString(R.string.app_name);
 
         notifIntent = new Intent(this, DisturbService.class);
+
+        settings = getSharedPreferences(MainActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        editPrefs = settings.edit();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        if(intent.hasExtra("disable")) {
-            userSelectedDoDisturb();
+        if (intent != null) {
+            if(intent.hasExtra("disable")) {
+                userSelectedDoDisturb();
 
 //            ChangeDNDService.cancelNotification(getApplicationContext(), intent.getIntExtra("notification_id", 0));
 
             /*Create a boolean that will stop thinking you're driving. What if the passenger is
             connected to the car's bluetooth? They click 'not driving' and it's automatically set again.*/
+            }
         }
         return START_STICKY;
     }
@@ -96,6 +106,14 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
             sendToMainActivity(true);
         }
+
+        if(settings.getBoolean("switchOtherApps", false)) {
+            startOverlayService();
+        }
+    }
+    public static void makeNoise() {
+        Ringtone rTone = RingtoneManager.getRingtone(appContext, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        rTone.play();
     }
 
     public static void doDisturb() {
@@ -117,7 +135,21 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
             DetectDrivingService.setSittingIntoCar(false);
             UtilitiesService.setActive(false);
+
+            if(settings.getBoolean("switchOtherApps", false)) {
+                stopOverlayService();
+            }
         }
+    }
+
+    public static void startOverlayService() {
+        Intent intent = new Intent(appContext, Overlay.class);
+        appContext.startService(intent);
+    }
+
+    public static void stopOverlayService() {
+        Intent intent = new Intent(appContext, Overlay.class);
+        appContext.stopService(intent);
     }
 
     @Override
@@ -127,9 +159,9 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
 
     private static void drivingNotification() {
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(appContext);
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(appContext,  MainActivity.CHANNEL_ID);
         notification.setContentText("Do not Disturb Enabled as Driving.");
-        notification.setSmallIcon( R.mipmap.ic_launcher );
+        notification.setSmallIcon( R.drawable.ic_stat_notify_driving );
         notification.setContentTitle( appName );
 
         notification.setVisibility(Notification.VISIBILITY_PUBLIC);

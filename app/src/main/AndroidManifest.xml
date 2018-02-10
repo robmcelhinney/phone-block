@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.rob.FYPDrivingApp">
-
 
     <uses-feature
         android:name="android.hardware.sensor.accelerometer"
@@ -18,16 +18,20 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:allowBackup="true"
         android:extractNativeLibs="false"
         android:fullBackupContent="@xml/backup_descriptor"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher_driving"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="MainActivity">
+        <activity android:name="com.robmcelhinney.FYPDrivingApp.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -35,14 +39,17 @@
             </intent-filter>
         </activity>
 
-        <service android:name="ActivityRecognizedService" />
+        <service android:name="com.robmcelhinney.FYPDrivingApp.ActivityRecognizedService" />
         <service
-            android:name="ChangeDNDService"
+            android:name="com.robmcelhinney.FYPDrivingApp.ChangeDNDService"
             android:exported="false" />
-        <service android:name="DetectDrivingService" />
-        <service android:name="DisturbService" />
+        <service android:name="com.robmcelhinney.FYPDrivingApp.DetectDrivingService" />
+        <service android:name="com.robmcelhinney.FYPDrivingApp.DisturbService" />
+        <service android:name="com.robmcelhinney.FYPDrivingApp.Overlay" />
+        <service android:name="com.robmcelhinney.FYPDrivingApp.UtilitiesService"/>
 
-        <activity android:name="PermissionsSplashActivity" />
+        <activity android:name="com.robmcelhinney.FYPDrivingApp.PermissionsSplashActivity" />
+        <activity android:name="com.robmcelhinney.FYPDrivingApp.InstalledAppsActivity"></activity>
     </application>
 
 </manifest>

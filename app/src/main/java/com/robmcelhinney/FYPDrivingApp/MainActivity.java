@@ -1,56 +1,37 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
-import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.RemoteInput;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothClass;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothHeadset;
+import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
-import android.media.AudioManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+
+import com.example.rob.FYPDrivingApp.R;
+
 import java.math.BigDecimal;
 import java.util.*;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityRecognitionClient;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
     //    private NotificationManager mNotificationManager;
@@ -69,11 +50,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private ToggleButton toggleButtonActive;
 
+    private Button appsButton;
+
     private int notificationId = 1;
 
     public static final String MY_PREFS_NAME = "MyPrefsFile";
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
+
+    public final static int REQUEST_CODE_OVERLAY = 123;
+    public final static int REQUEST_CODE_USAGE = 124;
+
+    public static final String CHANNEL_ID = "com.robmcelhinney.FYPDrivingApp.ANDROID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,10 +89,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
 
-        greatestProb = (TextView) findViewById(R.id.greatestProb);
-        sittingcarTextView = (TextView) findViewById(R.id.sittingcar_prob);
-        currText = (TextView) findViewById(R.id.currText);
-        BTtextView = (TextView) findViewById(R.id.BTtextView);
+        greatestProb = findViewById(R.id.greatestProb);
+        sittingcarTextView = findViewById(R.id.sittingcar_prob);
+        currText = findViewById(R.id.currText);
+        BTtextView = findViewById(R.id.BTtextView);
 
         textToSpeech = new TextToSpeech(this, this);
         textToSpeech.setLanguage(Locale.US);
@@ -113,11 +101,20 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         toggleButtonActive.setChecked(settings.getBoolean("buttonActive", false));
         toggleButtonActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    DisturbService.doNotDisturb();
-                } else {
-                    DisturbService.userSelectedDoDisturb();
-                }
+            if (isChecked) {
+                DisturbService.doNotDisturb();
+            } else {
+                DisturbService.userSelectedDoDisturb();
+            }
+            }
+        });
+
+        appsButton = (Button) findViewById(R.id.appsButton);
+        final Intent installedAppsActivityIntent = new Intent(this, InstalledAppsActivity.class);
+        appsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(installedAppsActivityIntent);
             }
         });
 
@@ -171,12 +168,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         switchBT.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            if (isChecked) {
-                editor.putBoolean("switchBT", true);
-            } else {
-                editor.putBoolean("switchBT", false);
-            }
-            editor.commit();
+        editor.putBoolean("switchBT", isChecked ?  true : false);
+        editor.commit();
             }
         });
 
@@ -186,11 +179,25 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                if(Settings.canDrawOverlays(getApplicationContext())) {
-
+                //checks if is view app running in Foreground.
+                // TODO add explanation of why permission is needed.
+                try {
+                    ApplicationInfo applicationInfo = MainActivity.this.getPackageManager().getApplicationInfo(MainActivity.this.getPackageName(), 0);
+                    if(((AppOpsManager) MainActivity.this.getSystemService(Context.APP_OPS_SERVICE))
+                            .checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, applicationInfo.packageName)
+                            != AppOpsManager.MODE_ALLOWED) {
+                        Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
+                        startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), REQUEST_CODE_USAGE);
+                    }
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
                 }
-                else{
-                    Toast.makeText(getApplicationContext(), "No Permissions!", Toast.LENGTH_SHORT).show();
+
+                //checks if is allowed to overlay on top of other apps, if not then send user to settings.
+                // TODO add explanation of why permission is needed.
+                if(!Settings.canDrawOverlays(MainActivity.this)) {
+                    Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
+                    startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), REQUEST_CODE_OVERLAY);
                 }
                 editor.putBoolean("switchOtherApps", true);
             } else {
@@ -253,8 +260,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         @Override
         public void onReceive(Context context, Intent intent) {
         // Get extra data included in the Intent
-        toggleButtonActive.setChecked(intent.getBooleanExtra("valueBool", false));
-        editor.putBoolean("buttonActive", Boolean.TRUE);
+        boolean value = intent.getBooleanExtra("valueBool", false);
+        toggleButtonActive.setChecked(value);
+        editor.putBoolean("buttonActive", value).apply();
         editor.commit();
         }
     };
@@ -277,8 +285,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        super.onPause();
         if (textToSpeech != null) {
 
             textToSpeech.stop();
@@ -327,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 
     private void displayNotification(String message) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
         builder.setContentText(message);
         builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setContentTitle(getString(R.string.app_name));
@@ -343,6 +351,29 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         editor.apply();
     }
+
+
+
+
+//    private void userInstalledApps() {
+//        List<ApplicationInfo> apps = getPackageManager().getInstalledApplications(0);
+//
+//        List<ApplicationInfo> installedApps = new ArrayList<ApplicationInfo>();
+//
+//        for(ApplicationInfo app : apps) {
+//            //checks for flags; if flagged, check if updated system app
+//            if((app.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
+//                installedApps.add(app);
+//                //it's a system app, not interested
+//            } else if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
+//                //Discard this one
+//                //in this case, it should be a user-installed app
+//            } else {
+//                installedApps.add(app);
+//            }
+//        }
+//    }
+
 
 }
 

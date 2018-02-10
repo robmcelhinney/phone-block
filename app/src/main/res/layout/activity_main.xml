@@ -8,7 +8,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:background="@color/blue"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.rob.FYPDrivingApp.MainActivity">
+    tools:context="com.robmcelhinney.FYPDrivingApp.MainActivity">
 
     <TextView
         android:id="@+id/textView2"
@@ -89,12 +89,10 @@
 
     <TextView
         android:id="@+id/BTtextView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="26dp"
-        android:layout_toStartOf="@+id/currText"
         android:text="Bluey" />
 
     <Switch
@@ -149,7 +147,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/tableLayout"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="10dp"
         android:text="ToggleButton"
         android:textOff="Not Driving"
         android:textOn="Driving" />
@@ -165,5 +163,14 @@
         android:layout_alignEnd="@+id/switchPant"
         android:layout_alignStart="@+id/switchPant"
         android:text="Disable Distracting Apps" />
+
+    <Button
+        android:id="@+id/appsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/toggleButtonActive"
+        android:layout_marginTop="12dp"
+        android:text="Apps" />
 
 </RelativeLayout>

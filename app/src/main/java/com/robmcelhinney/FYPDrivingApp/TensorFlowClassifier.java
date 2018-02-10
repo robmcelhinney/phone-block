@@ -1,4 +1,4 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
 import android.content.Context;
 
@@ -25,11 +25,11 @@ public class TensorFlowClassifier {
 //    private static final int OUTPUT_SIZE = 7;
     private static final int OUTPUT_SIZE = 6;
 
-    public TensorFlowClassifier(final Context context) {
+    protected TensorFlowClassifier(final Context context) {
         inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), MODEL_FILE);
     }
 
-    public float[] predictProbabilities(float[] data) {
+    protected float[] predictProbabilities(float[] data) {
         float[] result = new float[OUTPUT_SIZE];
         inferenceInterface.feed(INPUT_NODE, data, INPUT_SIZE);
         inferenceInterface.run(OUTPUT_NODES);

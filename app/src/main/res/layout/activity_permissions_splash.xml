@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/blue"
-    tools:context="com.example.rob.FYPDrivingApp.PermissionsSplashActivity"
+    tools:context="com.robmcelhinney.FYPDrivingApp.PermissionsSplashActivity"
     tools:layout_editor_absoluteY="81dp">
 
     <ImageView

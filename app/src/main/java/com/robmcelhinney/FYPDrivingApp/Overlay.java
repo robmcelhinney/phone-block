@@ -1,0 +1,109 @@
+package com.robmcelhinney.FYPDrivingApp;
+
+import android.app.ActivityManager;
+import android.app.Service;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.support.annotation.Nullable;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.example.rob.FYPDrivingApp.R;
+import com.rvalerio.fgchecker.AppChecker;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
+import static java.lang.System.in;
+
+/**
+ * Created by Rob on 08/02/2018.
+ */
+
+public class Overlay extends Service {
+
+    private final int delayMillis = 1000;
+
+    private final Handler handler = new Handler();
+
+    private Runnable runnable;
+
+    private AppChecker appChecker = new AppChecker();
+
+    private SharedPreferences settings;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        settings = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
+
+        handlerLoop();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void handlerLoop() {
+        runnable= new Runnable() {
+            @Override
+            public void run() {
+                closeApps();
+                handler.postDelayed(this, delayMillis);
+            }
+        };
+
+        handler.postDelayed(runnable, 3000);
+    }
+
+    private void closeApps() {
+        if (getForegroundApp() != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(getForegroundApp())) {
+            goHome();
+            displayToast("App not allowed while Driving");
+        }
+    }
+
+    private void goHome() {
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(homeIntent);
+    }
+
+    private String getForegroundApp(){
+        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
+        return appChecker.getForegroundApp(getApplicationContext());
+    }
+
+    private void displayToast(final String msg) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+}

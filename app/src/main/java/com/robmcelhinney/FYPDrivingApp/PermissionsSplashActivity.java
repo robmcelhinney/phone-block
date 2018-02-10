@@ -1,4 +1,4 @@
-package com.example.rob.FYPDrivingApp;
+package com.robmcelhinney.FYPDrivingApp;
 
 import android.*;
 import android.Manifest;
@@ -20,6 +20,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.rob.FYPDrivingApp.*;
+import com.example.rob.FYPDrivingApp.R;
+
 import org.apache.commons.lang3.ArrayUtils;
 
 public class PermissionsSplashActivity extends AppCompatActivity {
@@ -39,7 +43,7 @@ public class PermissionsSplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_permissions_splash);
+        setContentView(com.example.rob.FYPDrivingApp.R.layout.activity_permissions_splash);
 
         permissionNeededTextView = (TextView) findViewById(R.id.permissionNeededTextView);
 
