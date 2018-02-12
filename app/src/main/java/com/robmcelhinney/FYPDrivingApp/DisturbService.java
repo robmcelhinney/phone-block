@@ -16,8 +16,6 @@ package com.robmcelhinney.FYPDrivingApp;
         import android.support.v4.content.ContextCompat;
         import android.support.v4.content.LocalBroadcastManager;
 
-        import com.example.rob.FYPDrivingApp.R;
-
         import java.util.Locale;
         import java.util.Random;
 

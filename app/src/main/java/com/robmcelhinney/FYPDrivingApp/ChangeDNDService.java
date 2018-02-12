@@ -12,8 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
-import com.example.rob.FYPDrivingApp.R;
-
 import java.util.Objects;
 
 /**

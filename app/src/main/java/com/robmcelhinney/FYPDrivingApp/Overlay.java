@@ -17,7 +17,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.rob.FYPDrivingApp.R;
 import com.rvalerio.fgchecker.AppChecker;
 
 import java.util.HashSet;
@@ -77,8 +76,10 @@ public class Overlay extends Service {
         handler.postDelayed(runnable, 3000);
     }
 
+    // TODO Make sure FG app isn't this application.
     private void closeApps() {
-        if (getForegroundApp() != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(getForegroundApp())) {
+        String fgApp = getForegroundApp();
+        if (fgApp != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(fgApp)) {
             goHome();
             displayToast("App not allowed while Driving");
         }
@@ -92,7 +93,7 @@ public class Overlay extends Service {
     }
 
     private String getForegroundApp(){
-        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
+//        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
         return appChecker.getForegroundApp(getApplicationContext());
     }
 
