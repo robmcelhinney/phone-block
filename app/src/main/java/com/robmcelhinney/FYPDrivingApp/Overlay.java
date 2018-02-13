@@ -63,8 +63,10 @@ public class Overlay extends Service {
         handler.postDelayed(runnable, 3000);
     }
 
+    // TODO Make sure FG app isn't this application.
     private void closeApps() {
-        if (getForegroundApp() != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(getForegroundApp())) {
+        String fgApp = getForegroundApp();
+        if (fgApp != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(fgApp)) {
             goHome();
             displayToast("App not allowed while Driving");
         }
@@ -78,7 +80,7 @@ public class Overlay extends Service {
     }
 
     private String getForegroundApp(){
-        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
+//        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
         return appChecker.getForegroundApp(getApplicationContext());
     }
 
