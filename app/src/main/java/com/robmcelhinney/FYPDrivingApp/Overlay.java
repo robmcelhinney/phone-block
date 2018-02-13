@@ -1,32 +1,19 @@
 package com.robmcelhinney.FYPDrivingApp;
 
-import android.app.ActivityManager;
 import android.app.Service;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.rob.FYPDrivingApp.R;
 import com.rvalerio.fgchecker.AppChecker;
 
 import java.util.HashSet;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
-import static java.lang.System.in;
 
 /**
  * Created by Rob on 08/02/2018.
@@ -59,7 +46,6 @@ public class Overlay extends Service {
         handler.removeCallbacks(runnable);
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;

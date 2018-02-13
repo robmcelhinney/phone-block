@@ -10,15 +10,8 @@
         android:layout_height="55dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:src="@mipmap/ic_launcher" />
-
-    <EditText
-        android:id="@+id/listItemText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/listItemThumbnail"
-        android:text="Name"/>
+        android:src="@mipmap/ic_launcher"
+        android:paddingBottom="5dp"/>
 
     <CheckBox
         android:id="@+id/listCheckBox"
@@ -26,6 +19,18 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/listItemThumbnail"
         android:layout_alignParentEnd="true"
-        android:layout_marginBottom="11dp"/>
+        android:layout_marginBottom="11dp"
+        android:layout_marginEnd="11dp" />
+
+    <TextView
+        android:id="@+id/listItemText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/listCheckBox"
+        android:layout_alignBottom="@+id/listCheckBox"
+        android:layout_marginStart="18dp"
+        android:layout_toEndOf="@+id/listItemThumbnail"
+        android:text="TextView"
+        android:textSize="20dp" />
 
 </RelativeLayout>

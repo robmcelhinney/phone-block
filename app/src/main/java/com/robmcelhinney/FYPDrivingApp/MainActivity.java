@@ -337,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void displayNotification(String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
         builder.setContentText(message);
-        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_stat_notify_driving);
         builder.setContentTitle(getString(R.string.app_name));
         NotificationManagerCompat.from(this).notify(notificationId, builder.build());
         notificationId++;
@@ -351,29 +351,5 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         editor.apply();
     }
-
-
-
-
-//    private void userInstalledApps() {
-//        List<ApplicationInfo> apps = getPackageManager().getInstalledApplications(0);
-//
-//        List<ApplicationInfo> installedApps = new ArrayList<ApplicationInfo>();
-//
-//        for(ApplicationInfo app : apps) {
-//            //checks for flags; if flagged, check if updated system app
-//            if((app.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
-//                installedApps.add(app);
-//                //it's a system app, not interested
-//            } else if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-//                //Discard this one
-//                //in this case, it should be a user-installed app
-//            } else {
-//                installedApps.add(app);
-//            }
-//        }
-//    }
-
-
 }
 
