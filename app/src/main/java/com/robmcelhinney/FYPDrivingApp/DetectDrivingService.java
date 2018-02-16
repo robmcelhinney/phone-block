@@ -1,6 +1,5 @@
 package com.robmcelhinney.FYPDrivingApp;
 
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -19,23 +18,23 @@ import android.hardware.SensorManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.Math.round;
-
-import com.google.android.gms.location.ActivityRecognition;
 
 /**
  * Created by Rob on 27/01/2018.
@@ -48,10 +47,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     public GoogleApiClient mApiClient;
 
-    private NotificationManager mNotificationManager;
-
     private final int N_SAMPLES = 200;
-    private final int N_SAMPLES_TOTAL = 700;
+    private final int N_SAMPLES_TOTAL = 1500;
+    private final int N_SAMPLES_TOTAL_MAX = 2000;
     private final int N_CHECKS = 20;
 
     private List<Float> x;
@@ -122,7 +120,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
-//        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -131,7 +128,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
         unregisterReceiver(myBroadcastReceiver);
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -142,6 +138,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
         x.add(event.values[0]);
         y.add(event.values[1]);
         z.add(event.values[2]);
+
+        if(x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
+            x.subList(0, N_SAMPLES).clear();
+            y.subList(0, N_SAMPLES).clear();
+            z.subList(0, N_SAMPLES).clear();
+        }
     }
 
     @Override
@@ -150,7 +152,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onConnected(Bundle bundle) {
         Intent intent = new Intent( getApplicationContext(), ActivityRecognizedService.class );
         PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
         mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
@@ -162,12 +164,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
 
     @Override
-    public void onResult(@NonNull Status status) {
+    public void onResult(Status status) {
 
     }
 
@@ -181,16 +183,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
             String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
             String confidence = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE);
             float conf = Float.parseFloat(confidence);
-
-
-
-
-            if(activity.equalsIgnoreCase("STILL")) {
-//                DisturbService.doNotDisturb();
-//                checkBluetooth();
-            }
-
-
 
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
                 if (isSittingIntoCar()){setSittingIntoCar(false);}
@@ -209,6 +201,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
             }
             else {
                 if((activity.equalsIgnoreCase("IN_VEHICLE") || activity.equalsIgnoreCase("STILL")) && onFoot) {
+                    displayToast("Activity: " + activity + ". onFoot: " + onFoot);
                     activityPrediction();
                 }
 
@@ -216,7 +209,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
                         && !UtilitiesService.isActive()) {
                     DisturbService.doNotDisturb();
                 }
-                if (onFoot) {
+                if (onFoot && !activity.equalsIgnoreCase("TILTING")) {
                     onPause();
                     onFoot = false;
                 }
@@ -241,7 +234,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
         }
 
         @Override
-        public void onConnected(@Nullable Bundle bundle) {
+        public void onConnected(Bundle bundle) {
 
         }
 
@@ -251,12 +244,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
         }
 
         @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        public void onConnectionFailed(ConnectionResult connectionResult) {
 
         }
 
         @Override
-        public void onResult(@NonNull Status status) {
+        public void onResult(Status status) {
 
         }
     }
@@ -298,7 +291,21 @@ public class DetectDrivingService extends Service implements SensorEventListener
         return (SensorManager) getSystemService(SENSOR_SERVICE);
     }
 
+    private void displayToast(final String msg) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void activityPrediction() {
+        makeNoise();
+        displayToast("X size: " + x.size() + ". Loops: " + x.size() / N_CHECKS);
+
         if(x.size() > N_SAMPLES_TOTAL && y.size() > N_SAMPLES_TOTAL && z.size() > N_SAMPLES_TOTAL) {
             x.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
             y.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
@@ -307,9 +314,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
         if (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
             for(int i = 0; i < x.size() / N_CHECKS; i++) {
                 data = new ArrayList<>();
-                data.addAll(x.subList(0, N_SAMPLES+1));
-                data.addAll(y.subList(0, N_SAMPLES+1));
-                data.addAll(z.subList(0, N_SAMPLES+1));
+                data.addAll(x.subList(0, N_SAMPLES));
+                data.addAll(y.subList(0, N_SAMPLES));
+                data.addAll(z.subList(0, N_SAMPLES));
 
                 float[] results = classifier.predictProbabilities(toFloatArray(data));
 
@@ -323,7 +330,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 }
                 //End deletion.
 
-
                 if(sittingcarValue > 0.85){
                     String sittingCarString = "Sitting into car is" + sittingcarValue;
                     setSittingIntoCar(true);
@@ -331,14 +337,16 @@ public class DetectDrivingService extends Service implements SensorEventListener
                     break;
                 }
 
-                x.subList(0, N_CHECKS).clear();
-                y.subList(0, N_CHECKS).clear();
-                z.subList(0, N_CHECKS).clear();
+                x.subList(0, N_CHECKS+1).clear();
+                y.subList(0, N_CHECKS+1).clear();
+                z.subList(0, N_CHECKS+1).clear();
             }
-            x.clear();
-            y.clear();
-            z.clear();
+
+            displayToast("done activityprediction!");
         }
+        x.clear();
+        y.clear();
+        z.clear();
     }
 
     private float[] toFloatArray(List<Float> list) {

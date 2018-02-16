@@ -6,21 +6,18 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.example.rob.FYPDrivingApp.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +26,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
 
 import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
 
@@ -63,8 +59,6 @@ public class InstalledAppsActivity extends AppCompatActivity {
         selectedAppsPackageName = new HashSet<>();
 
         listView = (ListView) findViewById(R.id.listViewID);
-//        userInstalledApps();
-//        listView.setAdapter(new MyListAdapter(this, R.layout.list_item, installedAppsNames));
         new LoadApplications().execute();
 
 //        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -73,8 +67,6 @@ public class InstalledAppsActivity extends AppCompatActivity {
 //                Toast.makeText(InstalledAppsActivity.this, "List item was clicked at " + position, Toast.LENGTH_SHORT).show();
 //            }
 //        });
-
-
     }
 
     private void userInstalledApps() {
