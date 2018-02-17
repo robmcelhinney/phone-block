@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    compileSdkVersion 27
+    buildToolsVersion '27.0.0'
     defaultConfig {
         applicationId 'com.robmcelhinney.FYPDrivingApp'
         minSdkVersion 24
@@ -45,6 +45,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:11.8.0'
     compile 'com.rvalerio:fgchecker:1.1.0'
     testCompile 'junit:junit:4.12'
-
     implementation files('libs/commons-lang3-3.7.jar')
 }

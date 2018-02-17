@@ -1,23 +1,24 @@
 package com.robmcelhinney.FYPDrivingApp;
 
-        import android.app.Notification;
-        import android.app.NotificationManager;
-        import android.app.PendingIntent;
-        import android.app.Service;
-        import android.content.Context;
-        import android.content.Intent;
-        import android.content.SharedPreferences;
-        import android.media.Ringtone;
-        import android.media.RingtoneManager;
-        import android.os.IBinder;
-        import android.speech.tts.TextToSpeech;
-        import android.support.annotation.Nullable;
-        import android.support.v4.app.NotificationCompat;
-        import android.support.v4.content.ContextCompat;
-        import android.support.v4.content.LocalBroadcastManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.os.IBinder;
+import android.speech.tts.TextToSpeech;
+import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
-        import java.util.Locale;
-        import java.util.Random;
+import java.util.Locale;
+import java.util.Random;
 
 /**
  * Created by Rob on 27/01/2018.
@@ -92,17 +93,21 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
     }
 
     public static void doNotDisturb() {
-        if (mNotificationManager.isNotificationPolicyAccessGranted() && mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
-            prevNotificationFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Log.d("doNotDisturbenter", "enter" + mNotificationManager.isNotificationPolicyAccessGranted());
+        if (mNotificationManager.isNotificationPolicyAccessGranted()) {
+            if(mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
+                prevNotificationFilter = mNotificationManager.getCurrentInterruptionFilter();
 
-            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            textToSpeech.speak("Turning on Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
+                mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                textToSpeech.speak("Turning on Do not Disturb.", TextToSpeech.QUEUE_ADD, null, Integer.toString(new Random().nextInt()));
 
-            drivingNotification();
-
-            UtilitiesService.setActive(true);
-
-            sendToMainActivity(true);
+                drivingNotification();
+                UtilitiesService.setActive(true);
+                sendToMainActivity(true);
+            }
+        }
+        else {
+            PermissionsSplashActivity.checkPermission(appContext);
         }
 
         if(settings.getBoolean("switchOtherApps", false)) {
@@ -120,7 +125,6 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
             ChangeDNDService.cancelNotification(appContext, drivNotiId);
             sendToMainActivity(false);
-
 
             // sets interruption filter to what it used to be rather than always turning it off.
             if(prevNotificationFilter != -1){
@@ -157,11 +161,12 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
 
     private static void drivingNotification() {
+        Log.d("drivNot", "startingNotification");
+
         NotificationCompat.Builder notification = new NotificationCompat.Builder(appContext,  MainActivity.CHANNEL_ID);
         notification.setContentText("Do not Disturb Enabled as Driving.");
-        notification.setSmallIcon( R.drawable.ic_stat_notify_driving );
+        notification.setSmallIcon( R.drawable.ic_stat_notify_driving_white );
         notification.setContentTitle( appName );
-
         notification.setVisibility(Notification.VISIBILITY_PUBLIC);
 
         notification.setColor(ContextCompat.getColor(appContext, R.color.cast_expanded_controller_ad_container_white_stripe_color));

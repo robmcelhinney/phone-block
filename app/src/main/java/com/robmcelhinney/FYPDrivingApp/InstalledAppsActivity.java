@@ -17,7 +17,6 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,10 +29,9 @@ import java.util.Set;
 import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
 
 public class InstalledAppsActivity extends AppCompatActivity {
+    public static final String PACKAGE_NAME = "com.robmcelhinney.FYPDrivingApp";
     private List<ApplicationInfo> installedApps;
     private ArrayList<String> installedAppsNames;
-
-    private ArrayList<Integer> drawables = new ArrayList<>();
 
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
@@ -58,7 +56,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
 
         selectedAppsPackageName = new HashSet<>();
 
-        listView = (ListView) findViewById(R.id.listViewID);
+        listView = findViewById(R.id.listViewID);
         new LoadApplications().execute();
 
 //        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -76,7 +74,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
         installedAppsNames = new ArrayList();
 
         for(ApplicationInfo app : apps) {
-            if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+            if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && !((String) app.loadLabel(getApplicationContext().getPackageManager())).equalsIgnoreCase(PACKAGE_NAME)) {
                 installedApps.add(app);
                 installedAppsNames.add((String) app.loadLabel(getApplicationContext().getPackageManager()));
             }
@@ -84,7 +82,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
 
         Collections.sort(installedApps, new Comparator<ApplicationInfo>() {
             public int compare(ApplicationInfo v1, ApplicationInfo v2) {
-                return ((String) v1.loadLabel(getApplicationContext().getPackageManager())).compareTo((String)v2.loadLabel(getApplicationContext().getPackageManager()));
+                return ((String) v1.loadLabel(getApplicationContext().getPackageManager())).compareToIgnoreCase((String)v2.loadLabel(getApplicationContext().getPackageManager()));
             }
         });
         Collections.sort(installedAppsNames);
@@ -112,7 +110,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
                 viewHolder.title = convertView.findViewById(R.id.listItemText);
                 viewHolder.checkBox = convertView.findViewById(R.id.listCheckBox);
 
-                viewHolder.title.setText(installedApps.get(position).loadLabel(getApplicationContext().getPackageManager()) + " " + position);
+                viewHolder.title.setText(installedApps.get(position).loadLabel(getApplicationContext().getPackageManager()));
                 viewHolder.thumbnail.setImageDrawable(installedApps.get(position).loadIcon(getApplicationContext().getPackageManager()));
 
                 if(selectedAppsPackageName.contains(installedApps.get(position).packageName)) {
@@ -128,7 +126,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
             }
             else {
                 viewHolder = (ViewHolder) convertView.getTag();
-                viewHolder.title.setText(installedApps.get(position).loadLabel(getApplicationContext().getPackageManager()) + " " + position);
+                viewHolder.title.setText(installedApps.get(position).loadLabel(getApplicationContext().getPackageManager()));
                 viewHolder.thumbnail.setImageDrawable(installedApps.get(position).loadIcon(getApplicationContext().getPackageManager()));
                 if(settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(installedApps.get(position).packageName)) {
                     checkState[position] = true;
@@ -146,21 +144,18 @@ public class InstalledAppsActivity extends AppCompatActivity {
                 if(checkState[position]) {
                     selectedAppsPackageName.remove(installedApps.get(position).packageName);
                     editor.putStringSet("selectedAppsPackage", selectedAppsPackageName).apply();
-                    Toast.makeText(getContext(), "Button was clicked off for list item " + position, Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getContext(), "Button was clicked off for list item " + position, Toast.LENGTH_SHORT).show();
                 }
                 else {
                     selectedAppsPackageName.add(installedApps.get(position).packageName);
                     editor.putStringSet("selectedAppsPackage", selectedAppsPackageName).apply();
                     Log.d("InstalledClickedOff", installedApps.get(position).packageName + ". Size: " + selectedAppsPackageName.size());
-                    Toast.makeText(getContext(), "Button was clicked on for list item " + position + " : " + installedApps.get(position).packageName, Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getContext(), "Button was clicked on for list item " + position + " : " + installedApps.get(position).packageName, Toast.LENGTH_SHORT).show();
                 }
-                Log.d("InstalledCheckState1", "." + checkState[position]);
                 checkState[position] = !checkState[position];
-                Log.d("InstalledCheckState2", "." + checkState[position]);
                 notifyDataSetChanged();
                 }
             });
-
             return convertView;
         }
     }
@@ -206,7 +201,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            animateView(progressOverlay, View.VISIBLE, 0.4f, 200);
+            animateView(progressOverlay, View.VISIBLE, 1f, 200);
 
         }
 

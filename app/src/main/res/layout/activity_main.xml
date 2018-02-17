@@ -6,7 +6,7 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
-    android:background="@color/blue"
+    android:background="@color/grey"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.robmcelhinney.FYPDrivingApp.MainActivity">
 
@@ -57,7 +57,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/CurrentlyText"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="15dp"
+        android:layout_marginBottom="14dp"
         android:text="Greatest Prob:" />
 
     <TextView
@@ -96,81 +96,59 @@
         android:text="Bluey" />
 
     <Switch
-        android:id="@+id/switchPant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/textView4"
-        android:layout_marginBottom="74dp"
-        android:layout_toEndOf="@+id/CurrentlyText"
-        android:layout_toStartOf="@+id/greatestProb"
-        android:text="Phone in Pant Pocket"
-        android:textColor="@color/white" />
-
-    <Switch
         android:id="@+id/switchBT"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/switchPant"
+        android:layout_below="@+id/switchDetection"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:layout_toEndOf="@+id/CurrentlyText"
-        android:layout_toStartOf="@+id/greatestProb"
+        android:layout_marginTop="23dp"
         android:text="Bluetooth Detection"
-        android:textColor="@color/white" />
-
-    <Switch
-        android:id="@+id/switchShirt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/textView4"
-        android:layout_alignEnd="@+id/switchPant"
-        android:layout_alignStart="@+id/switchPant"
-        android:layout_marginBottom="20dp"
-        android:text="Phone in Shirt Pocket"
-        android:textColor="@color/white"/>
+        android:textColor="@color/black" />
 
     <Switch
         android:id="@+id/switchDetection"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/switchPant"
-        android:layout_alignStart="@+id/switchPant"
-        android:layout_marginBottom="98dp"
-        android:layout_toStartOf="@+id/greatestProb"
-        android:checked="true"
+        android:layout_below="@+id/toggleButtonActive"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="61dp"
         android:text="Turn On Detection"
-        android:textColor="@color/white"/>
+        android:textAlignment="viewStart"
+        android:textColor="@color/black" />
+
+    <Switch
+        android:id="@+id/switchOtherApps"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/switchBT"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="28dp"
+        android:text="Block Apps"
+        android:textColor="@color/black" />
 
     <ToggleButton
         android:id="@+id/toggleButtonActive"
+        style="@style/Base.Widget.AppCompat.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/tableLayout"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="37dp"
         android:text="ToggleButton"
         android:textOff="Not Driving"
-        android:textOn="Driving" />
+        android:textOn="Driving"
+        android:theme="@style/MyButton"/>
 
-    <Switch
-        android:id="@+id/switchOtherApps"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/switchDetection"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="30dp"
-        android:textColor="@color/white"
-        android:layout_alignEnd="@+id/switchPant"
-        android:layout_alignStart="@+id/switchPant"
-        android:text="Disable Distracting Apps" />
+
 
     <Button
         android:id="@+id/appsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_below="@+id/toggleButtonActive"
-        android:layout_marginTop="12dp"
-        android:text="Apps" />
+        android:layout_above="@+id/textView4"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="22dp"
+        android:text="Choose Apps"
+        android:theme="@style/ListAppsButton" />
 
 </RelativeLayout>

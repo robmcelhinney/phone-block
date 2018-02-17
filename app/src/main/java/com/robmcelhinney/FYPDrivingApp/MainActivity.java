@@ -29,16 +29,12 @@ import java.math.BigDecimal;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
-    //    private NotificationManager mNotificationManager;
     private TextToSpeech textToSpeech;
 
     private TextView greatestProb;
     private TextView sittingcarTextView;
     private TextView currText;
-    private TextView BTtextView;
 
-    private Switch switchPant;
-    private Switch switchShirt;
     private Switch switchDetection;
     private Switch switchBT;
     private Switch switchOtherApps;
@@ -75,8 +71,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         // Splash Screen first time launch
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        boolean previouslyStarted = prefs.getBoolean("pref_previously_started", false);
-        if (!previouslyStarted) {
+        if (!prefs.getBoolean("pref_previously_started", false)) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean("pref_previously_started", Boolean.TRUE);
             edit.commit();
@@ -84,15 +79,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
 
+
+
         greatestProb = findViewById(R.id.greatestProb);
         sittingcarTextView = findViewById(R.id.sittingcar_prob);
         currText = findViewById(R.id.currText);
-        BTtextView = findViewById(R.id.BTtextView);
 
         textToSpeech = new TextToSpeech(this, this);
         textToSpeech.setLanguage(Locale.US);
 
-        toggleButtonActive = (ToggleButton) findViewById(R.id.toggleButtonActive);
+        toggleButtonActive = findViewById(R.id.toggleButtonActive);
         toggleButtonActive.setChecked(settings.getBoolean("buttonActive", false));
         toggleButtonActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -104,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-        appsButton = (Button) findViewById(R.id.appsButton);
+        appsButton = findViewById(R.id.appsButton);
         final Intent installedAppsActivityIntent = new Intent(this, InstalledAppsActivity.class);
         appsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,36 +109,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-        switchPant = (Switch) findViewById(R.id.switchPant);
-//        switchPant.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//
-//            @Override
-//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                if(isChecked) {
-//                    startDetectDrivingService();
-//                }
-//                else {
-//                    stopDetectDrivingService();
-//                }
-//            }
-//
-//        });
-
-        switchShirt = (Switch) findViewById(R.id.switchShirt);
-/*        switchShirt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                }
-                else {
-                }
-            }
-
-        });*/
-
-
-        switchDetection = (Switch) findViewById(R.id.switchDetection);
+        switchDetection = findViewById(R.id.switchDetection);
         switchDetection.setChecked(settings.getBoolean("switchkey", false));
         switchDetection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -158,17 +125,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-        switchBT = (Switch) findViewById(R.id.switchBT);
+        switchBT = findViewById(R.id.switchBT);
         switchBT.setChecked(settings.getBoolean("switchBT", false));
         switchBT.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        editor.putBoolean("switchBT", isChecked ?  true : false);
+        editor.putBoolean("switchBT", isChecked);
         editor.commit();
             }
         });
 
-        switchOtherApps = (Switch) findViewById(R.id.switchOtherApps);
+        switchOtherApps = findViewById(R.id.switchOtherApps);
         switchOtherApps.setChecked(settings.getBoolean("switchOtherApps", false));
         switchOtherApps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -182,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                             .checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, applicationInfo.packageName)
                             != AppOpsManager.MODE_ALLOWED) {
                         Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
+
                         startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), REQUEST_CODE_USAGE);
                     }
                 } catch (PackageManager.NameNotFoundException e) {
@@ -202,25 +170,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-//        myBroadcastReceiver = new MyBroadcastReceiver();
-        //register BroadcastReceiver for ActivityRecognizedService
-//        IntentFilter intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
-//        intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
-//        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-//        registerReceiver(myBroadcastReceiver, intentFilter);
-
         if (switchDetection.isChecked()) {
             startDetectDrivingService();
         }
-
-
-//        // checks if user gave permission to change notification policy. If not, then launch
-//        // settings to get them to give permission.
-//        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-//        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-//            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-//            startActivity(intent);
-//        }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 mMessageReceiver, new IntentFilter("intentKey"));
@@ -239,9 +191,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         public void onReceive(Context context, Intent intent) {
         // Get extra data included in the Intent
         String message = intent.getStringExtra("text");
-        if (intent.hasExtra("BTText")) {
-            BTtextView.setText(message);
-        } else if (intent.hasExtra("currText")) {
+        if (intent.hasExtra("currText")) {
             currText.setText(message);
         } else if (intent.hasExtra("greatestProb")) {
             greatestProb.setText(message);
@@ -332,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void displayNotification(String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
         builder.setContentText(message);
-        builder.setSmallIcon(R.drawable.ic_stat_notify_driving);
+        builder.setSmallIcon( R.mipmap.ic_launcher );
         builder.setContentTitle(getString(R.string.app_name));
         NotificationManagerCompat.from(this).notify(notificationId, builder.build());
         notificationId++;

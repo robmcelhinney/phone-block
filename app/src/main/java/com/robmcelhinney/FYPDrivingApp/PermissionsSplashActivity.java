@@ -9,9 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.robmcelhinney.FYPDrivingApp.R;
 
 public class PermissionsSplashActivity extends AppCompatActivity {
 
@@ -23,26 +20,28 @@ public class PermissionsSplashActivity extends AppCompatActivity {
 
     private TextView skipTextView;
 
-    Button permissionsButton;
+    private Button permissionsButton;
 
-    private NotificationManager mNotificationManager;
+    private static NotificationManager mNotificationManager;
+
+    private final int MY_PERMISSIONS_REQUEST_NOTIFICATION_POLICY = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_permissions_splash);
 
-        permissionNeededTextView = (TextView) findViewById(R.id.permissionNeededTextView);
+        permissionNeededTextView = findViewById(R.id.permissionNeededTextView);
 
-        skipTextView = (TextView) findViewById(R.id.skipTextView);
+        skipTextView = findViewById(R.id.skipTextView);
 
         skipTextView.setVisibility(View.INVISIBLE);
 
-        permissionsButton = (Button) findViewById(R.id.permissionsButton);
+        permissionsButton = findViewById(R.id.permissionsButton);
         permissionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                checkPermission();
+                checkPermission(PermissionsSplashActivity.this);
             }
         });
 
@@ -51,20 +50,12 @@ public class PermissionsSplashActivity extends AppCompatActivity {
         isPaused = false;
     }
 
-    private void checkPermission() {
+    public static void checkPermission(Context context) {
         // checks if user gave permission to change notification policy. If not, then launch
         // settings to get them to give permission.
         if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-            startActivity(intent);
+            context.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
         }
-
-//        ActivityCompat.requestPermissions(this,
-//                new String[]{Manifest.permission.ACCESS_NOTIFICATION_POLICY},
-//                1);
-//        if(mNotificationManager.isNotificationPolicyAccessGranted()) {
-//            startActivity(new Intent(PermissionsSplashActivity.this, MainActivity.class));
-//        }
     }
 
     // Should return here from settings after granting permission.
@@ -72,13 +63,13 @@ public class PermissionsSplashActivity extends AppCompatActivity {
         super.onResume();
         if (isPaused) {
             isPaused = false;
-            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-                skipTextView.setEnabled(true);
-                skipTextView.setVisibility(View.VISIBLE);
-            }
-            else {
-                Toast.makeText(this, "Congrats! Permission Granted.", Toast.LENGTH_SHORT).show();
+//            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+//                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+//                skipTextView.setEnabled(true);
+//                skipTextView.setVisibility(View.VISIBLE);
+//            }
+            if(mNotificationManager.isNotificationPolicyAccessGranted()) {
+//                Toast.makeText(this, "Congrats! Permission Granted.", Toast.LENGTH_SHORT).show();
                 returnToMain();
             }
 
@@ -93,6 +84,8 @@ public class PermissionsSplashActivity extends AppCompatActivity {
     public void onClick(View v) {
         returnToMain();
     }
+
+
 
 //    @Override
 //    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantedResults) {
@@ -125,9 +118,4 @@ public class PermissionsSplashActivity extends AppCompatActivity {
 
 
 
-
-
-
-
 }
-

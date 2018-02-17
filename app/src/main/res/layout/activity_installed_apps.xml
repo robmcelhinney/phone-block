@@ -3,13 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/grey"
     tools:context="com.robmcelhinney.FYPDrivingApp.InstalledAppsActivity">
     <include layout="@layout/progess_loading_overlay"/>
     <ListView
         android:id="@+id/listViewID"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingBottom="8dp"
+        android:paddingTop="8dp"
+        android:divider="@color/transparentBlack10"
+        android:dividerHeight="0.1dp"
+        android:theme="@style/MyList">
     </ListView>
-
-
 </RelativeLayout>

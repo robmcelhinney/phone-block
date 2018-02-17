@@ -202,6 +202,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
             else {
                 if((activity.equalsIgnoreCase("IN_VEHICLE") || activity.equalsIgnoreCase("STILL")) && onFoot) {
                     displayToast("Activity: " + activity + ". onFoot: " + onFoot);
+                    onPause();
                     activityPrediction();
                 }
 
@@ -261,14 +262,11 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 BluetoothClass bluetoothClass = device.getBluetoothClass();
                 if (bluetoothClass != null) {
                     int deviceClass = bluetoothClass.getDeviceClass();
-                    sendMessageToActivity("BTText", deviceClass + " :( " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
                     if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO || deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) {
 //                    if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
 
 //                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
 //                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-
-                        sendMessageToActivity("BTText", deviceClass + " :)Car " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO + " :)Handsfree " + BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE);
 
                         if(!UtilitiesService.isActive()) {
                             DisturbService.doNotDisturb();
@@ -304,15 +302,17 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     private void activityPrediction() {
         makeNoise();
-        displayToast("X size: " + x.size() + ". Loops: " + x.size() / N_CHECKS);
 
-        if(x.size() > N_SAMPLES_TOTAL && y.size() > N_SAMPLES_TOTAL && z.size() > N_SAMPLES_TOTAL) {
-            x.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
-            y.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
-            z.subList(0, x.size() - N_SAMPLES_TOTAL).clear();
+        if(x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
+            x.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
+            y.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
+            z.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
         }
+        displayToast("X size: " + x.size() + ". Loops: " + x.size() / N_CHECKS);
+        int loops = 0;
         if (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
             for(int i = 0; i < x.size() / N_CHECKS; i++) {
+                loops++;
                 data = new ArrayList<>();
                 data.addAll(x.subList(0, N_SAMPLES));
                 data.addAll(y.subList(0, N_SAMPLES));
@@ -342,7 +342,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 z.subList(0, N_CHECKS+1).clear();
             }
 
-            displayToast("done activityprediction!");
+            displayToast("done activityprediction! Loops: "+ loops);
         }
         x.clear();
         y.clear();

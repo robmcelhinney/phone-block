@@ -6,7 +6,7 @@
 
     android:alpha="0.4"
     android:animateLayoutChanges="true"
-    android:background="@android:color/black"
+    android:background="@color/grey"
     android:clickable="true"
     android:visibility="gone">
 
