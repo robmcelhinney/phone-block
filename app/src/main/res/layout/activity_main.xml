@@ -96,16 +96,6 @@
         android:text="Bluey" />
 
     <Switch
-        android:id="@+id/switchBT"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/switchDetection"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="23dp"
-        android:text="Bluetooth Detection"
-        android:textColor="@color/black" />
-
-    <Switch
         android:id="@+id/switchDetection"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
@@ -117,12 +107,23 @@
         android:textColor="@color/black" />
 
     <Switch
+        android:id="@+id/switchBT"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/switchDetection"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="23dp"
+        android:text="Bluetooth Detection"
+        android:textColor="@color/black" />
+
+    <Switch
         android:id="@+id/switchOtherApps"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/switchBT"
+        android:layout_alignStart="@+id/switchBT"
+        android:layout_marginTop="23dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="28dp"
         android:text="Block Apps"
         android:textColor="@color/black" />
 

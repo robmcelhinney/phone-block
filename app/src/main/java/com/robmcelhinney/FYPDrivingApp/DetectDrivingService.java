@@ -56,6 +56,10 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private List<Float> y;
     private List<Float> z;
 
+    private List<Float> x1;
+    private List<Float> y1;
+    private List<Float> z1;
+
     private List<Float> data;
 
     public static boolean isSittingIntoCar() {
@@ -151,11 +155,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     }
 
+    // Checks for current activity every 5 seconds.
     @Override
     public void onConnected(Bundle bundle) {
         Intent intent = new Intent( getApplicationContext(), ActivityRecognizedService.class );
         PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
+        mActivityRecognitionClient.requestActivityUpdates(5000, pendingIntent);
     }
 
     @Override
@@ -308,15 +313,21 @@ public class DetectDrivingService extends Service implements SensorEventListener
             y.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
             z.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
         }
-        displayToast("X size: " + x.size() + ". Loops: " + x.size() / N_CHECKS);
+
+        x1 = new ArrayList(x);
+        y1 = new ArrayList(y);
+        z1 = new ArrayList(z);
+
+
+        displayToast("X1 size: " + x1.size() + "samples: " + N_SAMPLES + ". Loops: " + x1.size() / N_CHECKS);
         int loops = 0;
-        if (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
-            for(int i = 0; i < x.size() / N_CHECKS; i++) {
+        if (x1.size() >= N_SAMPLES && y1.size() >= N_SAMPLES && z1.size() >= N_SAMPLES) {
+            for(int i = 0; i < x1.size() / N_CHECKS; i++) {
                 loops++;
                 data = new ArrayList<>();
-                data.addAll(x.subList(0, N_SAMPLES));
-                data.addAll(y.subList(0, N_SAMPLES));
-                data.addAll(z.subList(0, N_SAMPLES));
+                data.addAll(x1.subList(0, N_SAMPLES));
+                data.addAll(y1.subList(0, N_SAMPLES));
+                data.addAll(z1.subList(0, N_SAMPLES));
 
                 float[] results = classifier.predictProbabilities(toFloatArray(data));
 
@@ -331,19 +342,23 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 //End deletion.
 
                 if(sittingcarValue > 0.85){
-                    String sittingCarString = "Sitting into car is" + sittingcarValue;
+                    displayToast("Sitting into car is" + sittingcarValue);
                     setSittingIntoCar(true);
                     makeNoise();
                     break;
                 }
 
-                x.subList(0, N_CHECKS+1).clear();
-                y.subList(0, N_CHECKS+1).clear();
-                z.subList(0, N_CHECKS+1).clear();
+                x1.subList(0, N_CHECKS+1).clear();
+                y1.subList(0, N_CHECKS+1).clear();
+                z1.subList(0, N_CHECKS+1).clear();
             }
 
             displayToast("done activityprediction! Loops: "+ loops);
         }
+        x1.clear();
+        y1.clear();
+        z1.clear();
+
         x.clear();
         y.clear();
         z.clear();
