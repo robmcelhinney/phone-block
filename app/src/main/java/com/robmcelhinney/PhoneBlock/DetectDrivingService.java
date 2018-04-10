@@ -1,4 +1,4 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -21,6 +21,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
@@ -48,8 +50,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
     public GoogleApiClient mApiClient;
 
     private final int N_SAMPLES = 200;
-    private final int N_SAMPLES_TOTAL = 1500;
-    private final int N_SAMPLES_TOTAL_MAX = 2000;
+    private final int N_SAMPLES_TOTAL_MAX = 1200;
     private final int N_CHECKS = 20;
 
     private List<Float> x;
@@ -62,7 +63,10 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     private List<Float> data;
 
-    public static boolean isSittingIntoCar() {
+    private int numTimesOnFoot = 0;
+    private int numTimesCheckBT = 0;
+
+    public boolean isSittingIntoCar() {
         return sittingIntoCar;
     }
 
@@ -83,9 +87,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private float greatestProbValue = 0;
 
     private SharedPreferences settings;
-
-//    SharedPreferences prefs;
-//    SharedPreferences.Editor editPrefs;
 
     public void onCreate() {
         super.onCreate();
@@ -124,6 +125,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
+//        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -132,6 +134,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
         unregisterReceiver(myBroadcastReceiver);
     }
 
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -143,10 +146,15 @@ public class DetectDrivingService extends Service implements SensorEventListener
         y.add(event.values[1]);
         z.add(event.values[2]);
 
-        if(x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
-            x.subList(0, N_SAMPLES).clear();
-            y.subList(0, N_SAMPLES).clear();
-            z.subList(0, N_SAMPLES).clear();
+        if(settings.getBoolean("switchBT", false)) {
+            if (x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
+                x.subList(0, N_SAMPLES).clear();
+                y.subList(0, N_SAMPLES).clear();
+                z.subList(0, N_SAMPLES).clear();
+            }
+        }
+        else {
+            activityPrediction();
         }
     }
 
@@ -155,12 +163,11 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     }
 
-    // Checks for current activity every 5 seconds.
     @Override
-    public void onConnected(Bundle bundle) {
-        Intent intent = new Intent( getApplicationContext(), ActivityRecognizedService.class );
-        PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        mActivityRecognitionClient.requestActivityUpdates(5000, pendingIntent);
+    public void onConnected(@Nullable Bundle bundle) {
+        PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, new Intent( getApplicationContext(), ActivityRecognizedService.class ), PendingIntent.FLAG_UPDATE_CURRENT );
+        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
+        // TODO: Change from 3 seconds to 5.
     }
 
     @Override
@@ -169,12 +176,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 
     @Override
-    public void onResult(Status status) {
+    public void onResult(@NonNull Status status) {
 
     }
 
@@ -186,77 +193,84 @@ public class DetectDrivingService extends Service implements SensorEventListener
         @Override
         public void onReceive(Context context, Intent intent) {
             String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
-            String confidence = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE);
-            float conf = Float.parseFloat(confidence);
+            float conf = Float.parseFloat(intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE));
 
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
-                if (isSittingIntoCar()){setSittingIntoCar(false);}
+                if (isSittingIntoCar()){
+                    setSittingIntoCar(false);
+                }
 
                 if (!onFoot) {
-                    onResume();
+                    if(settings.getBoolean("switchkey", false)){
+                        onResume();
+                    }
                     onFoot = true;
                 }
 
-                if(UtilitiesService.isActive()) {
-                    DisturbService.doDisturb();
-                }
                 if(UtilitiesService.isUserNotDriving()){
                     UtilitiesService.setUserNotDriving(false);
                 }
+
+                // Will not deactive block until user has been on foot for ~15 seconds.
+                // This prevents a single poor prediction turning off the block.
+                if(UtilitiesService.isActive() && numTimesOnFoot >= 3) {
+                    DisturbService.doDisturb();
+                }
+
+                numTimesOnFoot++;
+                numTimesCheckBT = 0;
             }
             else {
                 if((activity.equalsIgnoreCase("IN_VEHICLE") || activity.equalsIgnoreCase("STILL")) && onFoot) {
                     displayToast("Activity: " + activity + ". onFoot: " + onFoot);
-                    onPause();
                     activityPrediction();
+                    if(settings.getBoolean("switchkey", false)) {
+                        onPause();
+                    }
                 }
-
                 if(activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.95 && isSittingIntoCar()
                         && !UtilitiesService.isActive()) {
                     DisturbService.doNotDisturb();
                 }
-                if (onFoot && !activity.equalsIgnoreCase("TILTING")) {
-                    onPause();
+                if (onFoot && !(activity.equalsIgnoreCase("TILTING") || activity.equalsIgnoreCase("UNKNOWN"))) {
+                    if(settings.getBoolean("switchkey", false)) {
+                        onPause();
+                    }
                     onFoot = false;
+                }
+                numTimesOnFoot = 0;
+
+                //Testing Bluetooth in Car.
+                if (activity.equalsIgnoreCase("IN_VEHICLE") && conf > 0.90 && !UtilitiesService.isActive()){
+                    if(numTimesCheckBT <= 6) {
+                        numTimesCheckBT++;
+                        checkBluetooth();
+                    }
+                    else{
+                        numTimesCheckBT = 0;
+                    }
                 }
             }
             sendMessageToActivity("currText", activity);
-
-
-            //Testing Bluetooth in Car.
-            if (activity.equalsIgnoreCase("IN_VEHICLE")){
-                checkBluetooth();
-            }
         }
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-
         }
-
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
         }
-
         @Override
-        public void onConnected(Bundle bundle) {
-
+        public void onConnected(@Nullable Bundle bundle) {
         }
-
         @Override
         public void onConnectionSuspended(int i) {
-
         }
-
         @Override
-        public void onConnectionFailed(ConnectionResult connectionResult) {
-
+        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         }
-
         @Override
-        public void onResult(Status status) {
-
+        public void onResult(@NonNull Status status) {
         }
     }
 
@@ -267,15 +281,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 BluetoothClass bluetoothClass = device.getBluetoothClass();
                 if (bluetoothClass != null) {
                     int deviceClass = bluetoothClass.getDeviceClass();
-                    if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO || deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) {
-//                    if (deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO) {
-
-//                                BTtextView.setText(bluetoothClass.getMajorDeviceClass());
-//                                BTtextView.setText(deviceClass + " : " + BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO);
-
-                        if(!UtilitiesService.isActive()) {
-                            DisturbService.doNotDisturb();
-                        }
+                    if ((deviceClass == BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO || deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE)) {
+                        DisturbService.doNotDisturb();
+                        onPause();
                     }
                 }
             }
@@ -306,69 +314,93 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     private void activityPrediction() {
-        makeNoise();
+//        makeNoise();
 
-        if(x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
-            x.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
-            y.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
-            z.subList(0, x.size() - (N_SAMPLES_TOTAL_MAX/2)).clear();
-        }
+        if (settings.getBoolean("switchBT", false)) {
+            displayToast("X1 size: " + x.size() + ". Predicted Loops: " + (x.size() - N_SAMPLES) / N_CHECKS);
+            int loops = 0;
+            float[] results;
+            while (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
+                x1 = new ArrayList(x.subList(0, N_SAMPLES));
+                y1 = new ArrayList(y.subList(0, N_SAMPLES));
+                z1 = new ArrayList(z.subList(0, N_SAMPLES));
+                if (x1.size() == N_SAMPLES && y1.size() == N_SAMPLES && z1.size() == N_SAMPLES) {
+                    loops++;
+                    data = new ArrayList<>();
+                    data.addAll(x1);
+                    data.addAll(y1);
+                    data.addAll(z1);
 
-        x1 = new ArrayList(x);
-        y1 = new ArrayList(y);
-        z1 = new ArrayList(z);
+                    results = classifier.predictProbabilities(toFloatArray(data));
 
+                    sittingcarValue = round(results[2]);
+                    sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
 
-        displayToast("X1 size: " + x1.size() + "samples: " + N_SAMPLES + ". Loops: " + x1.size() / N_CHECKS);
-        int loops = 0;
-        if (x1.size() >= N_SAMPLES && y1.size() >= N_SAMPLES && z1.size() >= N_SAMPLES) {
-            for(int i = 0; i < x1.size() / N_CHECKS; i++) {
-                loops++;
+                    // Will Delete further down the line.
+                    if (sittingcarValue > greatestProbValue) {
+                        greatestProbValue = sittingcarValue;
+                        sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
+                    }
+                    //End deletion.
+
+                    if (sittingcarValue > 0.85) {
+//                            displayToast("Sitting into car is" + sittingcarValue);
+                        setSittingIntoCar(true);
+                            makeNoise();
+                            displayToast("Break out of loop");
+                        break;
+                    }
+                }
+                x.subList(0, 20).clear();
+                y.subList(0, 20).clear();
+                z.subList(0, 20).clear();
+            }
+
+            x.clear();
+            y.clear();
+            z.clear();
+            displayToast("done activityprediction! Loops: " + loops);
+
+        } else {
+            if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
                 data = new ArrayList<>();
-                data.addAll(x1.subList(0, N_SAMPLES));
-                data.addAll(y1.subList(0, N_SAMPLES));
-                data.addAll(z1.subList(0, N_SAMPLES));
+                data.addAll(x);
+                data.addAll(y);
+                data.addAll(z);
 
                 float[] results = classifier.predictProbabilities(toFloatArray(data));
 
                 sittingcarValue = round(results[2]);
                 sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
 
+
                 // Will Delete further down the line.
-                if(greatestProbValue < sittingcarValue) {
+                if (greatestProbValue < sittingcarValue) {
                     greatestProbValue = sittingcarValue;
+                    //                greatestProb.setText(String.valueOf(greatestProbValue));
                     sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
                 }
                 //End deletion.
 
-                if(sittingcarValue > 0.85){
-                    displayToast("Sitting into car is" + sittingcarValue);
-                    setSittingIntoCar(true);
+
+                if (sittingcarValue > 0.85) {
+                    sittingIntoCar = true;
                     makeNoise();
-                    break;
+                    onPause();
                 }
 
-                x1.subList(0, N_CHECKS+1).clear();
-                y1.subList(0, N_CHECKS+1).clear();
-                z1.subList(0, N_CHECKS+1).clear();
+                x.subList(0, 20).clear();
+                y.subList(0, 20).clear();
+                z.subList(0, 20).clear();
             }
-
-            displayToast("done activityprediction! Loops: "+ loops);
         }
-        x1.clear();
-        y1.clear();
-        z1.clear();
-
-        x.clear();
-        y.clear();
-        z.clear();
     }
 
-    private float[] toFloatArray(List<Float> list) {
+    public float[] toFloatArray(List<Float> list1) {
         int i = 0;
-        float[] array = new float[list.size()];
+        float[] array = new float[list1.size()];
 
-        for (Float f : list) {
+        for (Float f : list1) {
             array[i++] = (f != null ? f : Float.NaN);
         }
         return array;
@@ -376,6 +408,10 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     public void makeNoise() {
         Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        rTone.play();
+    }
+    public void makeNoise2() {
+        Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
         rTone.play();
     }
 

@@ -16,25 +16,25 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:paddingLeft="16dp"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@mipmap/ic_launcher" />
 
         <TextView
             android:id="@+id/listItemText"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:gravity="center_vertical"
             android:paddingLeft="17dp"
             android:text="TextView"
-            android:gravity="center_vertical"
             android:textSize="20dp" />
 
         <CheckBox
             android:id="@+id/listCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="center_vertical"
+            android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:layout_marginLeft="16dp"/>
+            android:gravity="center_vertical" />
 
 
     </LinearLayout>

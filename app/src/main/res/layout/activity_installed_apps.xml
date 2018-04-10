@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/grey"
-    tools:context="com.robmcelhinney.FYPDrivingApp.InstalledAppsActivity">
+    tools:context="com.robmcelhinney.PhoneBlock.InstalledAppsActivity">
     <include layout="@layout/progess_loading_overlay"/>
     <ListView
         android:id="@+id/listViewID"

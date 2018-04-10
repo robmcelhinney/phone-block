@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
-    tools:context="com.robmcelhinney.FYPDrivingApp.PermissionsSplashActivity"
+    tools:context="com.robmcelhinney.PhoneBlock.PermissionsSplashActivity"
     tools:layout_editor_absoluteY="81dp">
 
     <ImageView
         android:id="@+id/imageView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="64dp"
-        android:layout_marginTop="148dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="121dp"
         android:adjustViewBounds="true"
         android:contentDescription="@string/contentDescKey"
         android:maxHeight="100dp"
@@ -29,11 +29,12 @@
         android:id="@+id/permissionNeededTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="17dp"
+        android:layout_below="@+id/imageView2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
         android:text="@string/SplashHeader"
         android:textColor="@color/white"
         android:textSize="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/subHeaderTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,12 +42,13 @@
 
     <TextView
         android:id="@+id/subHeaderTextView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="49dp"
-        android:layout_marginEnd="66dp"
-        android:layout_marginStart="66dp"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/permissionNeededTextView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
         android:text="Please enable notification access on the next screen to use this app."
+        android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14dp"
         app:layout_constraintBottom_toTopOf="@+id/permissionsButton"
@@ -58,26 +60,13 @@
         android:id="@+id/permissionsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="60dp"
         android:background="@color/white"
         android:text="Go"
-        app:layout_constraintBottom_toTopOf="@+id/skipTextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/skipTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="29dp"
-        android:text="@string/skipUnderline"
-        android:textColor="@color/white"
-        android:textSize="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        android:onClick="onClick"
-        android:clickable="true"/>
+        tools:layout_editor_absoluteY="486dp" />
 
-</android.support.constraint.ConstraintLayout>
+</RelativeLayout>

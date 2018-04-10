@@ -1,4 +1,4 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 import android.app.Service;
 import android.content.Intent;
@@ -6,14 +6,14 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.rvalerio.fgchecker.AppChecker;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
-import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
+import static com.robmcelhinney.PhoneBlock.MainActivity.MY_PREFS_NAME;
 
 /**
  * Created by Rob on 08/02/2018.
@@ -27,23 +27,31 @@ public class Overlay extends Service {
 
     private Runnable runnable;
 
-    private AppChecker appChecker = new AppChecker();
+    private AppChecker appChecker;
 
     private SharedPreferences settings;
+
+    private HashMap closedApps;
 
     @Override
     public void onCreate() {
         super.onCreate();
         settings = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
 
-        handlerLoop();
+        appChecker = new AppChecker();
+        closedApps = new HashMap<>();
+    }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        handlerLoop();
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(runnable);
+//        handler.removeCallbacks(runnable);
     }
 
     @Override
@@ -67,8 +75,16 @@ public class Overlay extends Service {
     private void closeApps() {
         String fgApp = getForegroundApp();
         if (fgApp != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(fgApp)) {
+            if(closedApps.containsKey(fgApp)){
+                if((int)closedApps.get(fgApp) == 0) {
+                    displayToast("Close app while driving");
+                    closedApps.put(fgApp, (int)closedApps.get(fgApp)+1);
+                }
+                return;
+            }
             goHome();
-            displayToast("App not allowed while Driving");
+            displayToast("App not allowed while driving");
+            closedApps.put(fgApp, 0);
         }
     }
 

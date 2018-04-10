@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.robmcelhinney.FYPDrivingApp">
+    package="com.robmcelhinney.PhoneBlock">
 
     <uses-feature
         android:name="android.hardware.sensor.accelerometer"
@@ -34,7 +34,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.robmcelhinney.FYPDrivingApp.MainActivity">
+        <activity android:name="com.robmcelhinney.PhoneBlock.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -42,19 +42,23 @@
             android:screenOrientation="portrait"
         </activity>
 
-        <service android:name="com.robmcelhinney.FYPDrivingApp.ActivityRecognizedService" />
-        <service
-            android:name="com.robmcelhinney.FYPDrivingApp.ChangeDNDService"
+        <service android:name="com.robmcelhinney.PhoneBlock.ActivityRecognizedService"
             android:exported="false" />
-        <service android:name="com.robmcelhinney.FYPDrivingApp.DetectDrivingService" />
-        <service android:name="com.robmcelhinney.FYPDrivingApp.DisturbService" />
-        <service android:name="com.robmcelhinney.FYPDrivingApp.Overlay" />
-        <service android:name="com.robmcelhinney.FYPDrivingApp.UtilitiesService"/>
+        <service android:name="com.robmcelhinney.PhoneBlock.ChangeDNDService"
+            android:exported="false" />
+        <service android:name="com.robmcelhinney.PhoneBlock.DetectDrivingService"
+            android:exported="false" />
+        <service android:name="com.robmcelhinney.PhoneBlock.DisturbService"
+            android:exported="false" />
+        <service android:name="com.robmcelhinney.PhoneBlock.Overlay"
+            android:exported="false" />
+        <service android:name="com.robmcelhinney.PhoneBlock.UtilitiesService"
+            android:exported="false" />
 
-        <activity android:name="com.robmcelhinney.FYPDrivingApp.PermissionsSplashActivity">
+        <activity android:name="com.robmcelhinney.PhoneBlock.PermissionsSplashActivity">
             android:screenOrientation="portrait"
         </activity>
-        <activity android:name="com.robmcelhinney.FYPDrivingApp.InstalledAppsActivity">
+        <activity android:name="com.robmcelhinney.PhoneBlock.InstalledAppsActivity">
             android:screenOrientation="portrait"
         </activity>
     </application>

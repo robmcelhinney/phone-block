@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     buildToolsVersion '27.0.0'
     defaultConfig {
-        applicationId 'com.robmcelhinney.FYPDrivingApp'
+        applicationId 'com.robmcelhinney.PhoneBlock'
         minSdkVersion 24
         targetSdkVersion 26
         versionCode 1
@@ -45,5 +45,6 @@ dependencies {
     compile 'com.google.android.gms:play-services:11.8.0'
     compile 'com.rvalerio:fgchecker:1.1.0'
     testCompile 'junit:junit:4.12'
+    androidTestCompile 'org.mockito:mockito-core:2.7.22'
     implementation files('libs/commons-lang3-3.7.jar')
 }

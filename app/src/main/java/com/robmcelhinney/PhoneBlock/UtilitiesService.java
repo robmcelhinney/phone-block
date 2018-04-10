@@ -1,4 +1,4 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 import android.app.Service;
 import android.content.Intent;

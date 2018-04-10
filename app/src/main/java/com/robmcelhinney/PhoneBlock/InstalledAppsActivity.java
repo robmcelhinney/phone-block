@@ -1,4 +1,4 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -26,10 +26,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static com.robmcelhinney.FYPDrivingApp.MainActivity.MY_PREFS_NAME;
+import static com.robmcelhinney.PhoneBlock.MainActivity.MY_PREFS_NAME;
 
 public class InstalledAppsActivity extends AppCompatActivity {
-    public static final String PACKAGE_NAME = "com.robmcelhinney.FYPDrivingApp";
+    public static final String PACKAGE_NAME = "com.robmcelhinney.PhoneBlock";
     private List<ApplicationInfo> installedApps;
     private ArrayList<String> installedAppsNames;
 
@@ -58,13 +58,6 @@ public class InstalledAppsActivity extends AppCompatActivity {
 
         listView = findViewById(R.id.listViewID);
         new LoadApplications().execute();
-
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Toast.makeText(InstalledAppsActivity.this, "List item was clicked at " + position, Toast.LENGTH_SHORT).show();
-//            }
-//        });
     }
 
     private void userInstalledApps() {
@@ -87,7 +80,6 @@ public class InstalledAppsActivity extends AppCompatActivity {
         });
         Collections.sort(installedAppsNames);
     }
-
 
 
     private class MyListAdapter extends ArrayAdapter<String> {

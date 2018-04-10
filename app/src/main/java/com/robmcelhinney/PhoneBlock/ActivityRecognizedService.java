@@ -1,17 +1,11 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 /**
  * Created by Rob on 22/11/2017.
  */
 
 import android.app.IntentService;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;

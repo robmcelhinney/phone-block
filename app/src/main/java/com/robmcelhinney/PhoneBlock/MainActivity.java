@@ -1,6 +1,8 @@
-package com.robmcelhinney.FYPDrivingApp;
+package com.robmcelhinney.PhoneBlock;
 
 import android.app.AppOpsManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,12 +11,13 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
+import android.media.RingtoneManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -52,12 +55,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public final static int REQUEST_CODE_OVERLAY = 123;
     public final static int REQUEST_CODE_USAGE = 124;
 
-    public static final String CHANNEL_ID = "com.robmcelhinney.FYPDrivingApp.ANDROID";
+    public static final String CHANNEL_ID = "com.robmcelhinney.PhoneBlock.ANDROID";
+
+    private static NotificationManager mNotificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         startDisturbService();
 
@@ -70,11 +77,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 
         // Splash Screen first time launch
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        if (!prefs.getBoolean("pref_previously_started", false)) {
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.putBoolean("pref_previously_started", Boolean.TRUE);
-            edit.commit();
+        if (!PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("pref_previously_started", false)) {
             startActivity(new Intent(MainActivity.this, PermissionsSplashActivity.class));
         }
 
@@ -92,11 +95,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         toggleButtonActive.setChecked(settings.getBoolean("buttonActive", false));
         toggleButtonActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            if (isChecked) {
-                DisturbService.doNotDisturb();
-            } else {
-                DisturbService.userSelectedDoDisturb();
-            }
+                if (isChecked) {
+                    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                        MainActivity.checkPermission(getApplicationContext());
+                        toggleButtonActive.setChecked(false);
+                    }
+                    else{
+                        DisturbService.doNotDisturb();
+                    }
+                } else {
+                    DisturbService.userSelectedDoDisturb();
+                }
             }
         });
 
@@ -115,10 +124,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                startDetectDrivingService();
-                editor.putBoolean("switchkey", true);
+                if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                    MainActivity.checkPermission(getApplicationContext());
+                    switchDetection.setChecked(false);
+                }
+                else{
+                    startDetectDrivingService();
+                    editor.putBoolean("switchkey", true);
+                }
             } else {
-                stopDetectDrivingService();
+                if(!settings.getBoolean("switchBT", false)) {
+                    stopDetectDrivingService();
+                }
                 editor.putBoolean("switchkey", false);
             }
             editor.commit();
@@ -130,8 +147,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         switchBT.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        editor.putBoolean("switchBT", isChecked);
-        editor.commit();
+            editor.putBoolean("switchBT", isChecked);
+            editor.commit();
+                if(!settings.getBoolean("switchkey", false)) {
+                    stopDetectDrivingService();
+                }
             }
         });
 
@@ -141,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
+                editor.putBoolean("switchOtherApps", true);
                 //checks if is view app running in Foreground.
                 // TODO add explanation of why permission is needed.
                 try {
@@ -151,18 +172,21 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
 
                         startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), REQUEST_CODE_USAGE);
+
+                        switchOtherApps.setChecked(false);
                     }
                 } catch (PackageManager.NameNotFoundException e) {
                     e.printStackTrace();
                 }
 
-                //checks if is allowed to overlay on top of other apps, if not then send user to settings.
+                // checks if is allowed to overlay on top of other apps, if not then send user to settings.
                 // TODO add explanation of why permission is needed.
                 if(!Settings.canDrawOverlays(MainActivity.this)) {
                     Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
                     startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), REQUEST_CODE_OVERLAY);
+
+                    switchOtherApps.setChecked(false);
                 }
-                editor.putBoolean("switchOtherApps", true);
             } else {
                 editor.putBoolean("switchOtherApps", false);
             }
@@ -204,11 +228,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        // Get extra data included in the Intent
-        boolean value = intent.getBooleanExtra("valueBool", false);
-        toggleButtonActive.setChecked(value);
-        editor.putBoolean("buttonActive", value).apply();
-        editor.commit();
+            // Get extra data included in the Intent
+            boolean value = intent.getBooleanExtra("valueBool", false);
+            toggleButtonActive.setChecked(value);
         }
     };
 
@@ -241,6 +263,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         //un-register BroadcastReceiver
 //        unregisterReceiver(myBroadcastReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Do not destroy these services as they should continue when app has been destroyed to save
+        // space.
+//        stopDetectDrivingService();
+//        stopDisturbService();
+//        stopDNDService();
+
+
+        super.onDestroy();
     }
 
     @Override
@@ -279,13 +313,24 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
 
-    private void displayNotification(String message) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID);
-        builder.setContentText(message);
-        builder.setSmallIcon( R.mipmap.ic_launcher );
-        builder.setContentTitle(getString(R.string.app_name));
-        NotificationManagerCompat.from(this).notify(notificationId, builder.build());
-        notificationId++;
+    public void displayNotification(Context context, String message) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, "My Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+
+            // Configure the notification channel.
+            notificationChannel.setDescription(message);
+            notificationChannel.enableVibration(true);
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setSmallIcon( R.mipmap.ic_launcher )
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(message);
+
+        notificationManager.notify(notificationId, builder.build());
     }
 
     public void saveInfo() {
@@ -295,6 +340,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         editor.putBoolean("activeBool", UtilitiesService.isActive());
 
         editor.apply();
+    }
+
+
+    public static void checkPermission(Context context) {
+        // checks if user gave permission to change notification policy. If not, then launch
+        // settings to get them to give permission.
+        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+            context.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+        }
     }
 }
 
