@@ -11,9 +11,6 @@ import org.junit.Test;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Created by Rob on 05/04/2018.
- */
 public class InstalledAppsActivityTest {
 
     @Rule

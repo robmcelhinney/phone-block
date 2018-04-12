@@ -9,15 +9,10 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 public class PermissionsSplashActivity extends AppCompatActivity {
 
     private boolean isPaused;
-
-    private TextView permissionNeededTextView;
-
-    private Button permissionsButton;
 
     private static NotificationManager mNotificationManager;
 
@@ -29,9 +24,7 @@ public class PermissionsSplashActivity extends AppCompatActivity {
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        permissionNeededTextView = findViewById(R.id.permissionNeededTextView);
-
-        permissionsButton = findViewById(R.id.permissionsButton);
+        Button permissionsButton = findViewById(R.id.permissionsButton);
         permissionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -62,7 +55,7 @@ public class PermissionsSplashActivity extends AppCompatActivity {
     private void returnToMain() {
         SharedPreferences.Editor edit = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit();
         edit.putBoolean("pref_previously_started", Boolean.TRUE);
-        edit.commit();
+        edit.apply();
         finish();
     }
 

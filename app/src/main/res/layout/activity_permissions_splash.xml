@@ -34,7 +34,7 @@
         android:layout_marginTop="50dp"
         android:text="@string/SplashHeader"
         android:textColor="@color/white"
-        android:textSize="20dp"
+        android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,14 +47,26 @@
         android:layout_below="@+id/permissionNeededTextView"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="8dp"
-        android:text="Please enable notification access on the next screen to use this app."
+        android:text="@string/please_enable_notification_access_on_the_next_screen_to_use_this_app"
         android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="14dp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@+id/permissionsButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/permissionNeededTextView" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/subHeaderTextView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5sp"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:text="@string/without_these_permissions_we_will_be_unable_to_activate_the_block_while_driving"
+        android:textAlignment="center" />
 
     <Button
         android:id="@+id/permissionsButton"
@@ -64,7 +76,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="60dp"
         android:background="@color/white"
-        android:text="Go"
+        android:text="@string/go"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:layout_editor_absoluteY="486dp" />

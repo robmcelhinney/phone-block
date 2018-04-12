@@ -20,9 +20,9 @@
     android:layout_centerHorizontal="true"
     android:layout_marginTop="37dp"
     android:clipToPadding="false"
-    android:text="ToggleButton"
-    android:textOff="Not Driving"
-    android:textOn="Driving"
+    android:text="@string/togglebutton"
+    android:textOff="@string/not_driving"
+    android:textOn="@string/driving"
     android:theme="@style/MyButton" />
 
     <Switch
@@ -32,7 +32,7 @@
     android:layout_below="@+id/toggleButtonActive"
     android:layout_centerHorizontal="true"
     android:layout_marginTop="61dp"
-    android:text="Turn On Detection"
+    android:text="@string/turn_on_detection"
     android:textAlignment="viewStart"
     android:textColor="@color/black" />
 
@@ -43,7 +43,7 @@
     android:layout_below="@+id/switchDetection"
     android:layout_centerHorizontal="true"
     android:layout_marginTop="23dp"
-    android:text="Bluetooth Detection"
+    android:text="@string/bluetooth_detection"
     android:textColor="@color/black" />
 
     <Switch
@@ -54,7 +54,7 @@
     android:layout_alignStart="@+id/switchBT"
     android:layout_marginTop="23dp"
     android:layout_centerHorizontal="true"
-    android:text="Block Apps"
+    android:text="@string/block_apps"
     android:textColor="@color/black" />
 
 
@@ -65,7 +65,7 @@
     android:layout_below="@+id/switchOtherApps"
     android:layout_centerHorizontal="true"
     android:layout_marginTop="60dp"
-    android:text="Choose Apps"
+    android:text="@string/choose_apps"
     android:theme="@style/ListAppsButton" />
 
 </RelativeLayout>

@@ -16,17 +16,14 @@ import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Created by Rob on 05/04/2018.
- */
 public class MainActivityTest {
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<MainActivity>(MainActivity.class);
+    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
     private MainActivity mActivity = null;
 
-    Instrumentation.ActivityMonitor monitor = getInstrumentation().addMonitor(InstalledAppsActivity.class.getName(), null, false);
+    private Instrumentation.ActivityMonitor monitor = getInstrumentation().addMonitor(InstalledAppsActivity.class.getName(), null, false);
 
     @Before
     public void setUp() throws Exception {

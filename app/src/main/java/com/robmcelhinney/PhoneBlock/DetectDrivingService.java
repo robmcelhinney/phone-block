@@ -1,5 +1,6 @@
 package com.robmcelhinney.PhoneBlock;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -38,35 +39,21 @@ import java.util.List;
 
 import static java.lang.Math.round;
 
-/**
- * Created by Rob on 27/01/2018.
- */
-
 public class DetectDrivingService extends Service implements SensorEventListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
 
     private MyBroadcastReceiver myBroadcastReceiver;
 
-    public GoogleApiClient mApiClient;
-
     private final int N_SAMPLES = 200;
-    private final int N_SAMPLES_TOTAL_MAX = 1200;
-    private final int N_CHECKS = 20;
 
     private List<Float> x;
     private List<Float> y;
     private List<Float> z;
 
-    private List<Float> x1;
-    private List<Float> y1;
-    private List<Float> z1;
-
-    private List<Float> data;
-
     private int numTimesOnFoot = 0;
     private int numTimesCheckBT = 0;
 
-    public boolean isSittingIntoCar() {
+    private boolean isSittingIntoCar() {
         return sittingIntoCar;
     }
 
@@ -83,13 +70,13 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     private TensorFlowClassifier classifier;
 
-    private float sittingcarValue = 0;
     private float greatestProbValue = 0;
 
     private SharedPreferences settings;
 
     private IntentFilter intentFilter;
 
+    @SuppressLint("RestrictedApi")
     public void onCreate() {
         super.onCreate();
 
@@ -112,7 +99,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
         mActivityRecognitionClient = new ActivityRecognitionClient(getApplicationContext());
 
-        mApiClient = new GoogleApiClient.Builder(getApplicationContext())
+        GoogleApiClient mApiClient = new GoogleApiClient.Builder(getApplicationContext())
                 .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -150,7 +137,8 @@ public class DetectDrivingService extends Service implements SensorEventListener
         z.add(event.values[2]);
 
         if(settings.getBoolean("switchBT", false)) {
-            if (x.size() > N_SAMPLES_TOTAL_MAX && y.size() > N_SAMPLES_TOTAL_MAX && z.size() > N_SAMPLES_TOTAL_MAX) {
+            int n_SAMPLES_TOTAL_MAX = 1200;
+            if (x.size() > n_SAMPLES_TOTAL_MAX && y.size() > n_SAMPLES_TOTAL_MAX && z.size() > n_SAMPLES_TOTAL_MAX) {
                 x.subList(0, N_SAMPLES).clear();
                 y.subList(0, N_SAMPLES).clear();
                 z.subList(0, N_SAMPLES).clear();
@@ -225,7 +213,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
             }
             else {
                 if((activity.equalsIgnoreCase("IN_VEHICLE") || activity.equalsIgnoreCase("STILL")) && onFoot) {
-                    displayToast("Activity: " + activity + ". onFoot: " + onFoot);
                     activityPrediction();
                     if(settings.getBoolean("switchkey", false)) {
                         onPause();
@@ -319,14 +306,17 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private void activityPrediction() {
 //        makeNoise();
 
+        List<Float> data;
+        float sittingcarValue;
         if (settings.getBoolean("switchBT", false)) {
-            displayToast("X1 size: " + x.size() + ". Predicted Loops: " + (x.size() - N_SAMPLES) / N_CHECKS);
+            int n_CHECKS = 20;
+            displayToast("X1 size: " + x.size() + ". Predicted Loops: " + (x.size() - N_SAMPLES) / n_CHECKS);
             int loops = 0;
             float[] results;
             while (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
-                x1 = new ArrayList(x.subList(0, N_SAMPLES));
-                y1 = new ArrayList(y.subList(0, N_SAMPLES));
-                z1 = new ArrayList(z.subList(0, N_SAMPLES));
+                List<Float> x1 = new ArrayList<>(x.subList(0, N_SAMPLES));
+                List<Float> y1 = new ArrayList(y.subList(0, N_SAMPLES));
+                List<Float> z1 = new ArrayList(z.subList(0, N_SAMPLES));
                 if (x1.size() == N_SAMPLES && y1.size() == N_SAMPLES && z1.size() == N_SAMPLES) {
                     loops++;
                     data = new ArrayList<>();
@@ -342,7 +332,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
                     // Will Delete further down the line.
                     if (sittingcarValue > greatestProbValue) {
                         greatestProbValue = sittingcarValue;
-                        sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
+                        sendMessageToActivity("greatestPrsittingcarValueob", String.valueOf(greatestProbValue));
                     }
                     //End deletion.
 
@@ -399,7 +389,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
         }
     }
 
-    public float[] toFloatArray(List<Float> list1) {
+    private float[] toFloatArray(List<Float> list1) {
         int i = 0;
         float[] array = new float[list1.size()];
 
@@ -409,7 +399,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
         return array;
     }
 
-    public void makeNoise() {
+    private void makeNoise() {
         Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
         rTone.play();
     }

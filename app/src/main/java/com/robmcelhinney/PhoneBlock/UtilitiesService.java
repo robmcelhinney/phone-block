@@ -5,10 +5,6 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-/**
- * Created by Rob on 25/01/2018.
- */
-
 public class UtilitiesService extends Service {
 
     public void onCreate() {
@@ -41,12 +37,6 @@ public class UtilitiesService extends Service {
     }
 
     private static boolean active = false;
-
-    public static int getNotifyId() {
-        return notifyId;
-    }
-
-    private static int notifyId = 0;
 
     public static boolean isUserNotDriving() { return userNotDriving; }
 

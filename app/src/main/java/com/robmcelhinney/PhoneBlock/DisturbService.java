@@ -20,10 +20,6 @@ import android.util.Log;
 
 import static com.robmcelhinney.PhoneBlock.MainActivity.CHANNEL_ID;
 
-/**
- * Created by Rob on 27/01/2018.
- */
-
 public class DisturbService extends Service implements TextToSpeech.OnInitListener{
 
     private static NotificationManager mNotificationManager;
@@ -32,10 +28,9 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 //    private static TextToSpeech textToSpeech;
 
     private static Context appContext;
-    private static int drivNotiId = 0;
+    private static final int drivNotiId = 0;
 
     private static SharedPreferences settings;
-    private static SharedPreferences.Editor editPrefs;
 
     public void onCreate() {
         super.onCreate();
@@ -48,7 +43,6 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         appContext = getApplicationContext();
 
         settings = getSharedPreferences(MainActivity.MY_PREFS_NAME, MODE_PRIVATE);
-        editPrefs = settings.edit();
     }
 
     @Override
@@ -76,7 +70,6 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
     public void onDestroy() {
         super.onDestroy();
     }
-
 
     @Nullable
     @Override
@@ -142,12 +135,12 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 //        }
     }
 
-    public static void startOverlayService() {
+    private static void startOverlayService() {
         Intent intent = new Intent(appContext, Overlay.class);
         appContext.startService(intent);
     }
 
-    public static void stopOverlayService() {
+    private static void stopOverlayService() {
         Intent intent = new Intent(appContext, Overlay.class);
         appContext.stopService(intent);
     }
@@ -160,6 +153,7 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
     private static void drivingNotification() {
         NotificationManager notificationManager = (NotificationManager) appContext.getSystemService(NOTIFICATION_SERVICE);
+        assert notificationManager != null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, "My Notifications", NotificationManager.IMPORTANCE_DEFAULT);
 
@@ -189,7 +183,7 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         notificationManager.notify(drivNotiId, builder.build());
     }
 
-    protected static void cancelNotification() {
+    static void cancelNotification() {
         NotificationManager notiMgr = (NotificationManager) appContext.getSystemService(Context.NOTIFICATION_SERVICE);
         assert notiMgr != null;
         notiMgr.cancel(drivNotiId);
@@ -200,6 +194,7 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         Intent intent = new Intent("intentToggleButton");
         intent.putExtra("valueBool", value);
         LocalBroadcastManager.getInstance(appContext).sendBroadcast(intent);
+        SharedPreferences.Editor editPrefs = settings.edit();
         editPrefs.putBoolean("buttonActive", value).apply();
         editPrefs.commit();
     }

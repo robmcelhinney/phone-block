@@ -1,7 +1,6 @@
 package com.robmcelhinney.PhoneBlock;
 
 import android.app.AppOpsManager;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,13 +11,10 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
-import android.media.RingtoneManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -39,21 +35,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 //    private TextView currText;
 
     private Switch switchDetection;
-    private Switch switchBT;
     private Switch switchOtherApps;
 
     private ToggleButton toggleButtonActive;
-
-    private Button appsButton;
-
-    private int notificationId = 1;
 
     public static final String MY_PREFS_NAME = "MyPrefsFile";
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
 
-    public final static int REQUEST_CODE_OVERLAY = 123;
-    public final static int REQUEST_CODE_USAGE = 124;
+    private final static int REQUEST_CODE_OVERLAY = 123;
+    private final static int REQUEST_CODE_USAGE = 124;
 
     public static final String CHANNEL_ID = "com.robmcelhinney.PhoneBlock.ANDROID";
 
@@ -103,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-        appsButton = findViewById(R.id.appsButton);
+        Button appsButton = findViewById(R.id.appsButton);
         final Intent installedAppsActivityIntent = new Intent(this, InstalledAppsActivity.class);
         appsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,11 +123,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 }
                 editor.putBoolean("switchkey", false);
             }
-            editor.commit();
+            editor.apply();
             }
         });
 
-        switchBT = findViewById(R.id.switchBT);
+        Switch switchBT = findViewById(R.id.switchBT);
         switchBT.setChecked(settings.getBoolean("switchBT", false));
         switchBT.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -160,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 // TODO add explanation of why permission is needed.
                 try {
                     ApplicationInfo applicationInfo = MainActivity.this.getPackageManager().getApplicationInfo(MainActivity.this.getPackageName(), 0);
+                    assert ( MainActivity.this.getSystemService(Context.APP_OPS_SERVICE)) != null;
                     if(((AppOpsManager) MainActivity.this.getSystemService(Context.APP_OPS_SERVICE))
                             .checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, applicationInfo.packageName)
                             != AppOpsManager.MODE_ALLOWED) {
@@ -219,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
 
-    private BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
+    private final BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
         // Get extra data included in the Intent
@@ -276,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         super.onNewIntent(intent);
     }
 
-    public void startDNDService() {
+    private void startDNDService() {
         Intent intent = new Intent(this, ChangeDNDService.class);
         startService(intent);
     }
@@ -286,17 +278,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         stopService(intent);
     }
 
-    public void startDetectDrivingService() {
+    private void startDetectDrivingService() {
         Intent intent = new Intent(this, DetectDrivingService.class);
         startService(intent);
     }
 
-    public void stopDetectDrivingService() {
+    private void stopDetectDrivingService() {
         Intent intent = new Intent(this, DetectDrivingService.class);
         stopService(intent);
     }
 
-    public void startDisturbService() {
+    private void startDisturbService() {
         Intent intent = new Intent(this, DisturbService.class);
         startService(intent);
     }
@@ -304,27 +296,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public void stopDisturbService() {
         Intent intent = new Intent(this, DisturbService.class);
         stopService(intent);
-    }
-
-
-    public void displayNotification(Context context, String message) {
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, "My Notifications", NotificationManager.IMPORTANCE_DEFAULT);
-
-            // Configure the notification channel.
-            notificationChannel.setDescription(message);
-            notificationChannel.enableVibration(true);
-            notificationManager.createNotificationChannel(notificationChannel);
-        }
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setSmallIcon( R.mipmap.ic_launcher )
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(message);
-
-        notificationManager.notify(notificationId, builder.build());
     }
 
     public void saveInfo() {

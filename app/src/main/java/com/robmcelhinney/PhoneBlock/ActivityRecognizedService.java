@@ -1,9 +1,5 @@
 package com.robmcelhinney.PhoneBlock;
 
-/**
- * Created by Rob on 22/11/2017.
- */
-
 import android.app.IntentService;
 import android.content.Intent;
 

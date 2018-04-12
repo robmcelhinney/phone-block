@@ -16,10 +16,6 @@ import java.util.HashSet;
 
 import static com.robmcelhinney.PhoneBlock.MainActivity.MY_PREFS_NAME;
 
-/**
- * Created by Rob on 08/02/2018.
- */
-
 public class Overlay extends Service {
 
     private final int delayMillis = 2000;

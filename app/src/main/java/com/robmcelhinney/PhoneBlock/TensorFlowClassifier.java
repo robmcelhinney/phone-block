@@ -5,7 +5,7 @@ import android.content.Context;
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
 
-public class TensorFlowClassifier {
+class TensorFlowClassifier {
     static {
         System.loadLibrary("tensorflow_inference");
     }
@@ -24,11 +24,11 @@ public class TensorFlowClassifier {
 //    private static final int OUTPUT_SIZE = 7;
     private static final int OUTPUT_SIZE = 6;
 
-    protected TensorFlowClassifier(final Context context) {
+    TensorFlowClassifier(final Context context) {
         inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), MODEL_FILE);
     }
 
-    protected float[] predictProbabilities(float[] data) {
+    float[] predictProbabilities(float[] data) {
         float[] result = new float[OUTPUT_SIZE];
         inferenceInterface.feed(INPUT_NODE, data, INPUT_SIZE);
         inferenceInterface.run(OUTPUT_NODES);

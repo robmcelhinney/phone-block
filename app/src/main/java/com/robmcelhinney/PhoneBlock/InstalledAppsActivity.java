@@ -2,12 +2,14 @@ package com.robmcelhinney.PhoneBlock;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,14 +25,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import static com.robmcelhinney.PhoneBlock.MainActivity.MY_PREFS_NAME;
 
 public class InstalledAppsActivity extends AppCompatActivity {
-    public static final String PACKAGE_NAME = "com.robmcelhinney.PhoneBlock";
+    private static final String PACKAGE_NAME = "com.robmcelhinney.PhoneBlock";
     private List<ApplicationInfo> installedApps;
     private ArrayList<String> installedAppsNames;
 
@@ -43,6 +44,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
     private ListView listView;
     private Context thisContext;
 
+    @SuppressLint("CommitPrefEdits")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,16 +88,17 @@ public class InstalledAppsActivity extends AppCompatActivity {
         private int layout;
         boolean checkState[];
 
-        public MyListAdapter(Context context, int resource, List<String> objects) {
-            super(context, resource, objects);
-            layout = resource;
+        public MyListAdapter(Context context, List<String> objects) {
+            super(context, R.layout.list_item, objects);
+            layout = R.layout.list_item;
             checkState = new boolean[objects.size()];
         }
 
+        @NonNull
         @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, @NonNull ViewGroup parent) {
             ViewHolder viewHolder = new ViewHolder();
-            selectedAppsPackageName = new HashSet<String>(settings.getStringSet("selectedAppsPackage", new HashSet<String>()));
+            selectedAppsPackageName = new HashSet<>(settings.getStringSet("selectedAppsPackage", new HashSet<String>()));
             if(convertView == null) {
                 convertView = LayoutInflater.from(getContext()).inflate(layout, parent, false);
                 viewHolder.thumbnail = convertView.findViewById(R.id.listItemThumbnail);
@@ -160,24 +163,20 @@ public class InstalledAppsActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        Iterator itr = selectedAppsPackageName.iterator();
-        while(itr.hasNext()){
-            Log.d("installedappsPause", itr.next()+",");
-        }
         editor.clear();
         editor.putStringSet("selectedAppsPackage", selectedAppsPackageName);
         editor.commit();
         super.onPause();
     }
 
-    public void animateView(final View view, final int toVisibility, float toAlpha, int duration) {
+    private void animateView(final View view, final int toVisibility, float toAlpha) {
         boolean show = (toVisibility == View.VISIBLE);
         if (show) {
             view.setAlpha(0);
         }
         view.setVisibility(View.VISIBLE);
         view.animate()
-            .setDuration(duration)
+            .setDuration(200)
             .alpha(show ? toAlpha : 0)
             .setListener(new AnimatorListenerAdapter() {
                 @Override
@@ -188,18 +187,19 @@ public class InstalledAppsActivity extends AppCompatActivity {
     }
 
 
+    @SuppressLint("StaticFieldLeak")
     private class LoadApplications extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            animateView(progressOverlay, View.VISIBLE, 1f, 200);
+            animateView(progressOverlay, View.VISIBLE, 1f);
 
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            animateView(progressOverlay, View.GONE, 0, 200);
+            animateView(progressOverlay, View.GONE, 0);
         }
 
         @Override
@@ -209,7 +209,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    listView.setAdapter(new MyListAdapter(thisContext, R.layout.list_item, installedAppsNames));
+                    listView.setAdapter(new MyListAdapter(thisContext, installedAppsNames));
                 }
             });
 

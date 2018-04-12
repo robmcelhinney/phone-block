@@ -4,10 +4,8 @@
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorAccent">#E040FB</color>
     <!--<color name="colorAccent">#128ff8</color>-->
-    <color name="blue">#128ff8</color>
     <color name="black">#000000</color>
     <color name="white">#ffffff</color>
     <color name="grey">#fafafa</color>
-    <color name="transparentBlack20">#33000000</color>
     <color name="transparentBlack10">#1A000000</color>
 </resources>

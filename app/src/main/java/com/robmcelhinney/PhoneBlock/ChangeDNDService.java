@@ -7,13 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.util.Objects;
-
-/**
- * Created by Rob on 25/01/2018.
- */
 
 public class ChangeDNDService extends Service {
     private BroadcastReceiver doNotDisturbBroadcastReceiver;
@@ -52,7 +47,6 @@ public class ChangeDNDService extends Service {
             if(Objects.equals(intent.getAction(), (NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED))) {
                 NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-                Log.d("changing interruption filter", "entering broadcast receiver " +  mNotificationManager.getCurrentInterruptionFilter() + " isActive? " + UtilitiesService.isActive());
                 assert mNotificationManager != null;
                 if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
                     DisturbService.cancelNotification();

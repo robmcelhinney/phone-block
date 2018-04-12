@@ -16,7 +16,8 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:paddingLeft="16dp"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@string/icon_of_application" />
 
         <TextView
             android:id="@+id/listItemText"
@@ -25,8 +26,8 @@
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:paddingLeft="17dp"
-            android:text="TextView"
-            android:textSize="20dp" />
+            android:text="@string/textview"
+            android:textSize="20sp" />
 
         <CheckBox
             android:id="@+id/listCheckBox"

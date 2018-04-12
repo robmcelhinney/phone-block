@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion '27.0.0'
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId 'com.robmcelhinney.PhoneBlock'
         minSdkVersion 24
@@ -33,16 +33,16 @@ android {
 
 
 dependencies {
-    implementation 'com.android.support:design:27.0.2'
+    implementation 'com.android.support:design:27.1.1'
     compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:27.0.2'
-    compile 'com.android.support:mediarouter-v7:27.0.2'
-    compile 'com.android.support:animated-vector-drawable:27.0.2'
+    compile 'com.android.support:appcompat-v7:27.1.1'
+    compile 'com.android.support:mediarouter-v7:27.1.1'
+    compile 'com.android.support:animated-vector-drawable:27.1.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.google.android.gms:play-services:11.8.0'
+    compile 'com.google.android.gms:play-services:12.0.1'
     compile 'com.rvalerio:fgchecker:1.1.0'
     testCompile 'junit:junit:4.12'
     androidTestCompile 'org.mockito:mockito-core:2.7.22'
