@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.rvalerio.fgchecker.AppChecker;
@@ -21,16 +22,11 @@ import static com.robmcelhinney.PhoneBlock.MainActivity.MY_PREFS_NAME;
 
 public class Overlay extends Service {
 
-    private final int delayMillis = 1000;
-
+    private final int delayMillis = 2000;
     private final Handler handler = new Handler();
-
     private Runnable runnable;
-
     private AppChecker appChecker;
-
     private SharedPreferences settings;
-
     private HashMap closedApps;
 
     @Override
@@ -40,18 +36,21 @@ public class Overlay extends Service {
 
         appChecker = new AppChecker();
         closedApps = new HashMap<>();
+
+//        handlerLoop();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("onstartOverlay", "handler back running");
         handlerLoop();
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacks(runnable);
         super.onDestroy();
-//        handler.removeCallbacks(runnable);
     }
 
     @Override
@@ -63,8 +62,8 @@ public class Overlay extends Service {
         runnable= new Runnable() {
             @Override
             public void run() {
-                closeApps();
-                handler.postDelayed(this, delayMillis);
+            closeApps();
+            handler.postDelayed(this, delayMillis);
             }
         };
 
@@ -96,7 +95,7 @@ public class Overlay extends Service {
     }
 
     private String getForegroundApp(){
-//        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
+        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
         return appChecker.getForegroundApp(getApplicationContext());
     }
 

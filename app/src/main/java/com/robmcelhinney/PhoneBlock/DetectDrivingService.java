@@ -88,6 +88,8 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     private SharedPreferences settings;
 
+    private IntentFilter intentFilter;
+
     public void onCreate() {
         super.onCreate();
 
@@ -101,7 +103,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         //register BroadcastReceiver for ActivityRecognizedService
-        IntentFilter intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
+        intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
         intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
@@ -124,14 +126,15 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        registerReceiver(myBroadcastReceiver, intentFilter);
         return START_STICKY;
 //        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         unregisterReceiver(myBroadcastReceiver);
+        super.onDestroy();
     }
 
     @Nullable
@@ -211,9 +214,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
                     UtilitiesService.setUserNotDriving(false);
                 }
 
-                // Will not deactive block until user has been on foot for ~15 seconds.
+                // Will not deactive block until user has been on foot for ~10 seconds.
                 // This prevents a single poor prediction turning off the block.
-                if(UtilitiesService.isActive() && numTimesOnFoot >= 3) {
+                if(UtilitiesService.isActive() && numTimesOnFoot >= 2) {
                     DisturbService.doDisturb();
                 }
 

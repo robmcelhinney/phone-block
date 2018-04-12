@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
@@ -24,7 +25,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -34,9 +34,9 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
     private TextToSpeech textToSpeech;
 
-    private TextView greatestProb;
-    private TextView sittingcarTextView;
-    private TextView currText;
+//    private TextView greatestProb;
+//    private TextView sittingcarTextView;
+//    private TextView currText;
 
     private Switch switchDetection;
     private Switch switchBT;
@@ -62,19 +62,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         startDisturbService();
-
         startDNDService();
-
         startUtiliesService();
-
         settings = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
         editor = settings.edit();
-
 
         // Splash Screen first time launch
         if (!PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("pref_previously_started", false)) {
@@ -82,11 +78,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
 
-
-
-        greatestProb = findViewById(R.id.greatestProb);
-        sittingcarTextView = findViewById(R.id.sittingcar_prob);
-        currText = findViewById(R.id.currText);
+//        greatestProb = findViewById(R.id.greatestProb);
+//        sittingcarTextView = findViewById(R.id.sittingcar_prob);
+//        currText = findViewById(R.id.currText);
 
         textToSpeech = new TextToSpeech(this, this);
         textToSpeech.setLanguage(Locale.US);
@@ -199,10 +193,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter("intentKey"));
+            mMessageReceiver, new IntentFilter("intentKey"));
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiverToggleButton, new IntentFilter("intentToggleButton"));
+            mMessageReceiverToggleButton, new IntentFilter("intentToggleButton"));
     }
 
     private void startUtiliesService() {
@@ -213,24 +207,24 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-        // Get extra data included in the Intent
-        String message = intent.getStringExtra("text");
-        if (intent.hasExtra("currText")) {
-            currText.setText(message);
-        } else if (intent.hasExtra("greatestProb")) {
-            greatestProb.setText(message);
-        } else if (intent.hasExtra("sittingCarText")) {
-            sittingcarTextView.setText(message);
-        }
+//        // Get extra data included in the Intent
+//        String message = intent.getStringExtra("text");
+//        if (intent.hasExtra("currText")) {
+//            currText.setText(message);
+//        } else if (intent.hasExtra("greatestProb")) {
+//            greatestProb.setText(message);
+//        } else if (intent.hasExtra("sittingCarText")) {
+//            sittingcarTextView.setText(message);
+//        }
         }
     };
 
     private BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Get extra data included in the Intent
-            boolean value = intent.getBooleanExtra("valueBool", false);
-            toggleButtonActive.setChecked(value);
+        // Get extra data included in the Intent
+        boolean value = intent.getBooleanExtra("valueBool", false);
+        toggleButtonActive.setChecked(value);
         }
     };
 

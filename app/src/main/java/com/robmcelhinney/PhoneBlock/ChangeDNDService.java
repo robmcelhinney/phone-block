@@ -24,6 +24,8 @@ public class ChangeDNDService extends Service {
 
         doNotDisturbBroadcastReceiver = new doNotDisturbBroadcastReceiver();
         intentChangingDND = new IntentFilter();
+        intentChangingDND.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
+        registerReceiver(doNotDisturbBroadcastReceiver, intentChangingDND);
     }
 
     @Override
@@ -32,8 +34,6 @@ public class ChangeDNDService extends Service {
         registerReceiver(doNotDisturbBroadcastReceiver, intentChangingDND);
         return START_STICKY;
     }
-
-
 
     @Override
     public void onDestroy() {
@@ -54,7 +54,7 @@ public class ChangeDNDService extends Service {
 
                 Log.d("changing interruption filter", "entering broadcast receiver " +  mNotificationManager.getCurrentInterruptionFilter() + " isActive? " + UtilitiesService.isActive());
                 assert mNotificationManager != null;
-                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE && UtilitiesService.isActive()) {
+                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
                     DisturbService.cancelNotification();
                     DisturbService.doDisturb();
                 }

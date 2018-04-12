@@ -66,9 +66,10 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
 
     public static void userSelectedDoDisturb() {
         UtilitiesService.setUserNotDriving(true);
-        if(UtilitiesService.isActive()) {
+        Log.d("userSelectedDoDisturb", "" + UtilitiesService.isActive());
+//        if(UtilitiesService.isActive()) {
             doDisturb();
-        }
+//        }
     }
 
     @Override
@@ -101,7 +102,9 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         UtilitiesService.setActive(true);
         sendToMainActivity(true);
 
+        Log.d("startoverlayservice", "dnd");
         if(settings.getBoolean("switchOtherApps", false)) {
+            Log.d("startoverlayservice", "yes");
             startOverlayService();
         }
     }
@@ -134,9 +137,9 @@ public class DisturbService extends Service implements TextToSpeech.OnInitListen
         sendToMainActivity(false);
         DetectDrivingService.setSittingIntoCar(false);
         UtilitiesService.setActive(false);
-        if(settings.getBoolean("switchOtherApps", false)) {
+//        if(settings.getBoolean("switchOtherApps", false)) {
             stopOverlayService();
-        }
+//        }
     }
 
     public static void startOverlayService() {
