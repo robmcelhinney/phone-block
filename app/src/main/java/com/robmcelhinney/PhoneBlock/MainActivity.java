@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -24,15 +23,10 @@ import android.widget.Switch;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.math.BigDecimal;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
     private TextToSpeech textToSpeech;
-
-//    private TextView greatestProb;
-//    private TextView sittingcarTextView;
-//    private TextView currText;
 
     private Switch switchDetection;
     private Switch switchOtherApps;
@@ -67,11 +61,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (!PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("pref_previously_started", false)) {
             startActivity(new Intent(MainActivity.this, PermissionsSplashActivity.class));
         }
-
-
-//        greatestProb = findViewById(R.id.greatestProb);
-//        sittingcarTextView = findViewById(R.id.sittingcar_prob);
-//        currText = findViewById(R.id.currText);
 
         textToSpeech = new TextToSpeech(this, this);
         textToSpeech.setLanguage(Locale.US);
@@ -148,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             if (isChecked) {
                 editor.putBoolean("switchOtherApps", true);
                 //checks if is view app running in Foreground.
-                // TODO add explanation of why permission is needed.
                 try {
                     ApplicationInfo applicationInfo = MainActivity.this.getPackageManager().getApplicationInfo(MainActivity.this.getPackageName(), 0);
                     assert ( MainActivity.this.getSystemService(Context.APP_OPS_SERVICE)) != null;
@@ -166,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 }
 
                 // checks if is allowed to overlay on top of other apps, if not then send user to settings.
-                // TODO add explanation of why permission is needed.
                 if(!Settings.canDrawOverlays(MainActivity.this)) {
                     Toast.makeText(MainActivity.this, "Please grant permission in order to block other applications while driving", Toast.LENGTH_LONG).show();
                     startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), REQUEST_CODE_OVERLAY);
@@ -185,9 +172,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-            mMessageReceiver, new IntentFilter("intentKey"));
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(
             mMessageReceiverToggleButton, new IntentFilter("intentToggleButton"));
     }
 
@@ -195,21 +179,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         Intent intent = new Intent(this, UtilitiesService.class);
         startService(intent);
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-//        // Get extra data included in the Intent
-//        String message = intent.getStringExtra("text");
-//        if (intent.hasExtra("currText")) {
-//            currText.setText(message);
-//        } else if (intent.hasExtra("greatestProb")) {
-//            greatestProb.setText(message);
-//        } else if (intent.hasExtra("sittingCarText")) {
-//            sittingcarTextView.setText(message);
-//        }
-        }
-    };
 
     private final BroadcastReceiver mMessageReceiverToggleButton = new BroadcastReceiver() {
         @Override
@@ -224,17 +193,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     public void onInit(int status) {
 
-    }
-
-
-    private static float round(float d) {
-        BigDecimal bd = new BigDecimal(Float.toString(d));
-        bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
-        return bd.floatValue();
-    }
-
-    private SensorManager getSensorManager() {
-        return (SensorManager) getSystemService(SENSOR_SERVICE);
     }
 
     @Override
@@ -255,9 +213,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onDestroy() {
         // Do not destroy these services as they should continue when app has been destroyed to save
         // space.
-//        stopDetectDrivingService();
-//        stopDisturbService();
-//        stopDNDService();
+        stopDetectDrivingService();
+        stopDisturbService();
+        stopDNDService();
 
 
         super.onDestroy();
@@ -297,16 +255,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         Intent intent = new Intent(this, DisturbService.class);
         stopService(intent);
     }
-
-    public void saveInfo() {
-        SharedPreferences sharedPref = getSharedPreferences("activeInfo", Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean("activeBool", UtilitiesService.isActive());
-
-        editor.apply();
-    }
-
 
     public static void checkPermission(Context context) {
         // checks if user gave permission to change notification policy. If not, then launch

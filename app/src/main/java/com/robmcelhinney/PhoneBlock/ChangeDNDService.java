@@ -48,7 +48,7 @@ public class ChangeDNDService extends Service {
                 NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
                 assert mNotificationManager != null;
-                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
+                if (mNotificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_PRIORITY) {
                     DisturbService.cancelNotification();
                     DisturbService.doDisturb();
                 }

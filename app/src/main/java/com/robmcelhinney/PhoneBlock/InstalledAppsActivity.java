@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -113,7 +112,6 @@ public class InstalledAppsActivity extends AppCompatActivity {
                     checkState[position] = true;
                 }
                 else{
-//                    viewHolder.checkBox.setChecked(checkState[position]);
                     viewHolder.checkBox.setChecked(false);
                     checkState[position] = false;
                 }
@@ -139,13 +137,10 @@ public class InstalledAppsActivity extends AppCompatActivity {
                 if(checkState[position]) {
                     selectedAppsPackageName.remove(installedApps.get(position).packageName);
                     editor.putStringSet("selectedAppsPackage", selectedAppsPackageName).apply();
-//                    Toast.makeText(getContext(), "Button was clicked off for list item " + position, Toast.LENGTH_SHORT).show();
                 }
                 else {
                     selectedAppsPackageName.add(installedApps.get(position).packageName);
                     editor.putStringSet("selectedAppsPackage", selectedAppsPackageName).apply();
-                    Log.d("InstalledClickedOff", installedApps.get(position).packageName + ". Size: " + selectedAppsPackageName.size());
-//                    Toast.makeText(getContext(), "Button was clicked on for list item " + position + " : " + installedApps.get(position).packageName, Toast.LENGTH_SHORT).show();
                 }
                 checkState[position] = !checkState[position];
                 notifyDataSetChanged();

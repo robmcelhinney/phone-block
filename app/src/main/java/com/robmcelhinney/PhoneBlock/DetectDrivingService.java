@@ -24,7 +24,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -132,21 +131,10 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        activityPrediction();
         x.add(event.values[0]);
         y.add(event.values[1]);
         z.add(event.values[2]);
-
-        if(settings.getBoolean("switchBT", false)) {
-            int n_SAMPLES_TOTAL_MAX = 1200;
-            if (x.size() > n_SAMPLES_TOTAL_MAX && y.size() > n_SAMPLES_TOTAL_MAX && z.size() > n_SAMPLES_TOTAL_MAX) {
-                x.subList(0, N_SAMPLES).clear();
-                y.subList(0, N_SAMPLES).clear();
-                z.subList(0, N_SAMPLES).clear();
-            }
-        }
-        else {
-            activityPrediction();
-        }
     }
 
     @Override
@@ -157,8 +145,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, new Intent( getApplicationContext(), ActivityRecognizedService.class ), PendingIntent.FLAG_UPDATE_CURRENT );
-        mActivityRecognitionClient.requestActivityUpdates(3000, pendingIntent);
-        // TODO: Change from 3 seconds to 5.
+        mActivityRecognitionClient.requestActivityUpdates(5000, pendingIntent);
     }
 
     @Override
@@ -204,8 +191,11 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
                 // Will not deactive block until user has been on foot for ~10 seconds.
                 // This prevents a single poor prediction turning off the block.
-                if(UtilitiesService.isActive() && numTimesOnFoot >= 2) {
-                    DisturbService.doDisturb();
+                if(numTimesOnFoot >= 2) {
+                    if(UtilitiesService.isActive()) {
+                        DisturbService.doDisturb();
+                    }
+                    UtilitiesService.setUserNotDriving(false);
                 }
 
                 numTimesOnFoot++;
@@ -241,7 +231,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
                     }
                 }
             }
-            sendMessageToActivity("currText", activity);
         }
 
         @Override
@@ -303,89 +292,42 @@ public class DetectDrivingService extends Service implements SensorEventListener
         });
     }
 
+    /**
+     *    activityPrediction is based on implementation from:
+     *    Title: TensorFlow on Android for Human Activity Recognition with LSTMs
+     *    Author: Venelin Valkov
+     *    Date: <31/05/2017>
+     *    Availability: https://github.com/curiousily/TensorFlow-on-Android-for-Human-Activity-Recognition-with-LSTMs
+     **/
     private void activityPrediction() {
-//        makeNoise();
-
         List<Float> data;
         float sittingcarValue;
-        if (settings.getBoolean("switchBT", false)) {
-            int n_CHECKS = 20;
-            displayToast("X1 size: " + x.size() + ". Predicted Loops: " + (x.size() - N_SAMPLES) / n_CHECKS);
-            int loops = 0;
-            float[] results;
-            while (x.size() >= N_SAMPLES && y.size() >= N_SAMPLES && z.size() >= N_SAMPLES) {
-                List<Float> x1 = new ArrayList<>(x.subList(0, N_SAMPLES));
-                List<Float> y1 = new ArrayList(y.subList(0, N_SAMPLES));
-                List<Float> z1 = new ArrayList(z.subList(0, N_SAMPLES));
-                if (x1.size() == N_SAMPLES && y1.size() == N_SAMPLES && z1.size() == N_SAMPLES) {
-                    loops++;
-                    data = new ArrayList<>();
-                    data.addAll(x1);
-                    data.addAll(y1);
-                    data.addAll(z1);
+        if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
+            data = new ArrayList<>();
+            data.addAll(x);
+            data.addAll(y);
+            data.addAll(z);
 
-                    results = classifier.predictProbabilities(toFloatArray(data));
+            float[] results = classifier.predictProbabilities(toFloatArray(data));
 
-                    sittingcarValue = round(results[2]);
-                    sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
+            sittingcarValue = round(results[2]);
 
-                    // Will Delete further down the line.
-                    if (sittingcarValue > greatestProbValue) {
-                        greatestProbValue = sittingcarValue;
-                        sendMessageToActivity("greatestPrsittingcarValueob", String.valueOf(greatestProbValue));
-                    }
-                    //End deletion.
+            // Will Delete further down the line.
+            if (greatestProbValue < sittingcarValue) {
+                greatestProbValue = sittingcarValue;
+            }
+            //End deletion.
 
-                    if (sittingcarValue > 0.85) {
-//                            displayToast("Sitting into car is" + sittingcarValue);
-                        setSittingIntoCar(true);
-                            makeNoise();
-                            displayToast("Break out of loop");
-                        break;
-                    }
-                }
-                x.subList(0, 20).clear();
-                y.subList(0, 20).clear();
-                z.subList(0, 20).clear();
+
+            if (sittingcarValue > 0.85) {
+                sittingIntoCar = true;
+                makeNoise();
+                onPause();
             }
 
-            x.clear();
-            y.clear();
-            z.clear();
-            displayToast("done activityprediction! Loops: " + loops);
-
-        } else {
-            if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
-                data = new ArrayList<>();
-                data.addAll(x);
-                data.addAll(y);
-                data.addAll(z);
-
-                float[] results = classifier.predictProbabilities(toFloatArray(data));
-
-                sittingcarValue = round(results[2]);
-                sendMessageToActivity("sittingCarText", Float.toString(sittingcarValue));
-
-
-                // Will Delete further down the line.
-                if (greatestProbValue < sittingcarValue) {
-                    greatestProbValue = sittingcarValue;
-                    //                greatestProb.setText(String.valueOf(greatestProbValue));
-                    sendMessageToActivity("greatestProb", String.valueOf(greatestProbValue));
-                }
-                //End deletion.
-
-
-                if (sittingcarValue > 0.85) {
-                    sittingIntoCar = true;
-                    makeNoise();
-                    onPause();
-                }
-
-                x.subList(0, 20).clear();
-                y.subList(0, 20).clear();
-                z.subList(0, 20).clear();
-            }
+            x.subList(0, 20).clear();
+            y.subList(0, 20).clear();
+            z.subList(0, 20).clear();
         }
     }
 
@@ -402,17 +344,5 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private void makeNoise() {
         Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
         rTone.play();
-    }
-    public void makeNoise2() {
-        Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
-        rTone.play();
-    }
-
-
-    private void sendMessageToActivity(String type, String msg) {
-        Intent intent = new Intent("intentKey");
-        intent.putExtra(type, true);
-        intent.putExtra("text", msg);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
     }
 }

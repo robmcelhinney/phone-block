@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.rvalerio.fgchecker.AppChecker;
@@ -32,13 +31,10 @@ public class Overlay extends Service {
 
         appChecker = new AppChecker();
         closedApps = new HashMap<>();
-
-//        handlerLoop();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("onstartOverlay", "handler back running");
         handlerLoop();
         return super.onStartCommand(intent, flags, startId);
     }
@@ -66,19 +62,18 @@ public class Overlay extends Service {
         handler.postDelayed(runnable, 3000);
     }
 
-    // TODO Make sure FG app isn't this application.
     private void closeApps() {
         String fgApp = getForegroundApp();
         if (fgApp != null && settings.getStringSet("selectedAppsPackage", new HashSet<String>()).contains(fgApp)) {
             if(closedApps.containsKey(fgApp)){
                 if((int)closedApps.get(fgApp) == 0) {
-                    displayToast("Close app while driving");
+                    displayToast(getString(R.string.close_app_driving));
                     closedApps.put(fgApp, (int)closedApps.get(fgApp)+1);
                 }
                 return;
             }
             goHome();
-            displayToast("App not allowed while driving");
+            displayToast(getString(R.string.blocked_app_warning));
             closedApps.put(fgApp, 0);
         }
     }
@@ -91,7 +86,6 @@ public class Overlay extends Service {
     }
 
     private String getForegroundApp(){
-        Log.d("CurrApp",  "App is... " + appChecker.getForegroundApp(getApplicationContext()));
         return appChecker.getForegroundApp(getApplicationContext());
     }
 
