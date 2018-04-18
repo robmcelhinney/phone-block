@@ -6,14 +6,14 @@ import android.content.Intent;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
-public class ActivityRecognizedService extends IntentService {
+public class ActivityRecognisedService extends IntentService {
 
-    public static final String ACTION_ActivityRecognizedService = "com.example.androidintentservice.RESPONSE";
+    public static final String ACTION_ActivityRecognisedService = "com.robmcelhinney.PhoneBlock.ACTIVITY_RESPONSE";
     public static final String EXTRA_KEY_OUT_ACTIVITY = "EXTRA_OUT_ACTIVITY";
     public static final String EXTRA_KEY_OUT_CONFIDENCE = "EXTRA_OUT_ACTIVITY_CONFIDENCE";
 
-    public ActivityRecognizedService() {
-        super("ActivityRecognizedService");
+    public ActivityRecognisedService() {
+        super("ActivityRecognisedService");
     }
 
     @Override
@@ -21,11 +21,11 @@ public class ActivityRecognizedService extends IntentService {
         if(ActivityRecognitionResult.hasResult(intent)){
             DetectedActivity detectedActivity = ActivityRecognitionResult.extractResult(intent).getMostProbableActivity();
 
-            Intent intentResponse = new Intent();
-            intentResponse.setAction(ACTION_ActivityRecognizedService);
-            intentResponse.addCategory(Intent.CATEGORY_DEFAULT);
-            intentResponse.putExtra(EXTRA_KEY_OUT_ACTIVITY, getActivityName(detectedActivity));
-            intentResponse.putExtra(EXTRA_KEY_OUT_CONFIDENCE, Float.toString(detectedActivity.getConfidence()));
+            Intent intentResponse = new Intent()
+                    .setAction(ACTION_ActivityRecognisedService)
+                    .addCategory(Intent.CATEGORY_DEFAULT)
+                    .putExtra(EXTRA_KEY_OUT_ACTIVITY, getActivityName(detectedActivity))
+                    .putExtra(EXTRA_KEY_OUT_CONFIDENCE, Float.toString(detectedActivity.getConfidence()));
             sendBroadcast(intentResponse);
         }
     }
@@ -48,7 +48,8 @@ public class ActivityRecognizedService extends IntentService {
                 return "WALKING";
             case DetectedActivity.UNKNOWN:
                 return "UNKNOWN";
+            default:
+                return "";
         }
-        return "";
     }
 }

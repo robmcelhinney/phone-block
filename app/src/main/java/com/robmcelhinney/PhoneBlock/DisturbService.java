@@ -59,6 +59,7 @@ public class DisturbService extends Service{
 
     @Override
     public void onDestroy() {
+        cancelNotification();
         super.onDestroy();
     }
 
@@ -95,7 +96,6 @@ public class DisturbService extends Service{
     @SuppressLint("WrongConstant")
     public static void doDisturb() {
         if (mNotificationManager.isNotificationPolicyAccessGranted()) {
-//            mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
 
             cancelNotification();
 
@@ -137,22 +137,18 @@ public class DisturbService extends Service{
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
-        Intent notiIntent = new Intent(appContext, DisturbService.class);
-        notiIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        notiIntent.putExtra("disable", true);
-        notiIntent.putExtra("notification_id", drivNotiId);
-        PendingIntent disableIntent = PendingIntent.getService( appContext, 0, notiIntent, PendingIntent.FLAG_UPDATE_CURRENT );
-
-
-        PendingIntent disableIntent2 = PendingIntent.getActivity( appContext, 1, new Intent(appContext, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT );
+        Intent notiIntent = new Intent(appContext, DisturbService.class)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra("disable", true)
+                .putExtra("notification_id", drivNotiId);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(appContext, CHANNEL_ID)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setSmallIcon( R.drawable.ic_notify_driving_white )
                 .setContentTitle(appContext.getString(R.string.phoneblock_activated))
                 .setOngoing(true)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, appContext.getString(R.string.not_driving), disableIntent)
-                .setContentIntent(disableIntent2);
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, appContext.getString(R.string.not_driving), PendingIntent.getService( appContext, 0, notiIntent, PendingIntent.FLAG_UPDATE_CURRENT ))
+                .setContentIntent(PendingIntent.getActivity( appContext, 1, new Intent(appContext, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT ));
 
         notificationManager.notify(drivNotiId, builder.build());
     }
@@ -168,8 +164,5 @@ public class DisturbService extends Service{
         Intent intent = new Intent("intentToggleButton");
         intent.putExtra("valueBool", value);
         LocalBroadcastManager.getInstance(appContext).sendBroadcast(intent);
-        SharedPreferences.Editor editPrefs = settings.edit();
-        editPrefs.putBoolean("buttonActive", value).apply();
-        editPrefs.commit();
     }
 }

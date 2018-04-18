@@ -41,7 +41,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.robmcelhinney.PhoneBlock.ActivityRecognizedService"
+        <service android:name="com.robmcelhinney.PhoneBlock.ActivityRecognisedService"
             android:exported="false" />
         <service android:name="com.robmcelhinney.PhoneBlock.ChangeDNDService"
             android:exported="false" />

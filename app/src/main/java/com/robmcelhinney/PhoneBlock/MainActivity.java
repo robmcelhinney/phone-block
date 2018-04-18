@@ -13,7 +13,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -23,10 +22,7 @@ import android.widget.Switch;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.util.Locale;
-
-public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
-    private TextToSpeech textToSpeech;
+public class MainActivity extends AppCompatActivity {
 
     private Switch switchDetection;
     private Switch switchOtherApps;
@@ -62,24 +58,21 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             startActivity(new Intent(MainActivity.this, PermissionsSplashActivity.class));
         }
 
-        textToSpeech = new TextToSpeech(this, this);
-        textToSpeech.setLanguage(Locale.US);
-
         toggleButtonActive = findViewById(R.id.toggleButtonActive);
-        toggleButtonActive.setChecked(settings.getBoolean("buttonActive", false));
+        toggleButtonActive.setChecked(false);
         toggleButtonActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-                        MainActivity.checkPermission(getApplicationContext());
-                        toggleButtonActive.setChecked(false);
-                    }
-                    else{
-                        DisturbService.doNotDisturb();
-                    }
-                } else {
-                    DisturbService.userSelectedDoDisturb();
+            if (isChecked) {
+                if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                    checkPermission(getApplicationContext());
+                    toggleButtonActive.setChecked(false);
                 }
+                else{
+                    DisturbService.doNotDisturb();
+                }
+            } else {
+                DisturbService.userSelectedDoDisturb();
+            }
             }
         });
 
@@ -99,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
                 if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
-                    MainActivity.checkPermission(getApplicationContext());
+                    checkPermission(getApplicationContext());
                     switchDetection.setChecked(false);
                 }
                 else{
@@ -189,26 +182,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
 
-
-    @Override
-    public void onInit(int status) {
-
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (textToSpeech != null) {
-
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
-
-
-        //un-register BroadcastReceiver
-//        unregisterReceiver(myBroadcastReceiver);
-    }
-
     @Override
     protected void onDestroy() {
         // Do not destroy these services as they should continue when app has been destroyed to save
@@ -216,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         stopDetectDrivingService();
         stopDisturbService();
         stopDNDService();
-
 
         super.onDestroy();
     }
@@ -231,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         startService(intent);
     }
 
-    public void stopDNDService() {
+    private void stopDNDService() {
         Intent intent = new Intent(this, ChangeDNDService.class);
         stopService(intent);
     }
@@ -251,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         startService(intent);
     }
 
-    public void stopDisturbService() {
+    private void stopDisturbService() {
         Intent intent = new Intent(this, DisturbService.class);
         stopService(intent);
     }
@@ -259,7 +231,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public static void checkPermission(Context context) {
         // checks if user gave permission to change notification policy. If not, then launch
         // settings to get them to give permission.
-        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (!notificationManager.isNotificationPolicyAccessGranted()) {
             context.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
         }
     }

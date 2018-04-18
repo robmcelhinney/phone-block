@@ -16,8 +16,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -43,8 +41,6 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     private MyBroadcastReceiver myBroadcastReceiver;
 
-    private final int N_SAMPLES = 200;
-
     private List<Float> x;
     private List<Float> y;
     private List<Float> z;
@@ -64,15 +60,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private boolean onFoot = false;
 
     private ActivityRecognitionClient mActivityRecognitionClient;
-
     private BluetoothAdapter mBluetoothAdapter;
-
     private TensorFlowClassifier classifier;
-
-    private float greatestProbValue = 0;
-
     private SharedPreferences settings;
-
     private IntentFilter intentFilter;
 
     @SuppressLint("RestrictedApi")
@@ -88,9 +78,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
         myBroadcastReceiver = new MyBroadcastReceiver();
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        //register BroadcastReceiver for ActivityRecognizedService
-        intentFilter = new IntentFilter(ActivityRecognizedService.ACTION_ActivityRecognizedService);
-        intentFilter.addAction(ActivityRecognizedService.ACTION_ActivityRecognizedService);
+        //register BroadcastReceiver for ActivityRecognisedService
+        intentFilter = new IntentFilter(ActivityRecognisedService.ACTION_ActivityRecognisedService);
+        intentFilter.addAction(ActivityRecognisedService.ACTION_ActivityRecognisedService);
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(myBroadcastReceiver, intentFilter);
 
@@ -105,16 +95,12 @@ public class DetectDrivingService extends Service implements SensorEventListener
                 .build();
 
         mApiClient.connect();
-
-//        prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-//        editPrefs = prefs.edit();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         registerReceiver(myBroadcastReceiver, intentFilter);
         return START_STICKY;
-//        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -144,7 +130,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, new Intent( getApplicationContext(), ActivityRecognizedService.class ), PendingIntent.FLAG_UPDATE_CURRENT );
+        PendingIntent pendingIntent = PendingIntent.getService( getApplicationContext(), 0, new Intent( getApplicationContext(), ActivityRecognisedService.class ), PendingIntent.FLAG_UPDATE_CURRENT );
         mActivityRecognitionClient.requestActivityUpdates(5000, pendingIntent);
     }
 
@@ -164,14 +150,14 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
 
-    // Receiving data back from ActivityRecognizedService
+    // Receiving data back from ActivityRecognisedService
     // Receives the activity and confidence
     public class MyBroadcastReceiver extends BroadcastReceiver implements SensorEventListener, GoogleApiClient.ConnectionCallbacks,
             GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_ACTIVITY);
-            float conf = Float.parseFloat(intent.getStringExtra(ActivityRecognizedService.EXTRA_KEY_OUT_CONFIDENCE));
+            String activity = intent.getStringExtra(ActivityRecognisedService.EXTRA_KEY_OUT_ACTIVITY);
+            float conf = Float.parseFloat(intent.getStringExtra(ActivityRecognisedService.EXTRA_KEY_OUT_CONFIDENCE));
 
             if (activity.equalsIgnoreCase("ON_FOOT") && conf > 0.9){
                 if (isSittingIntoCar()){
@@ -293,7 +279,7 @@ public class DetectDrivingService extends Service implements SensorEventListener
     }
 
     /**
-     *    activityPrediction is based on implementation from:
+     *    activityPrediction() is based on implementation from:
      *    Title: TensorFlow on Android for Human Activity Recognition with LSTMs
      *    Author: Venelin Valkov
      *    Date: <31/05/2017>
@@ -302,7 +288,8 @@ public class DetectDrivingService extends Service implements SensorEventListener
     private void activityPrediction() {
         List<Float> data;
         float sittingcarValue;
-        if (x.size() == N_SAMPLES && y.size() == N_SAMPLES && z.size() == N_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
+        int n_SAMPLES = 200;
+        if (x.size() == n_SAMPLES && y.size() == n_SAMPLES && z.size() == n_SAMPLES && (x.size() % 20 == 0 && y.size() % 20 == 0 && z.size() % 20 == 0)) {
             data = new ArrayList<>();
             data.addAll(x);
             data.addAll(y);
@@ -312,16 +299,9 @@ public class DetectDrivingService extends Service implements SensorEventListener
 
             sittingcarValue = round(results[2]);
 
-            // Will Delete further down the line.
-            if (greatestProbValue < sittingcarValue) {
-                greatestProbValue = sittingcarValue;
-            }
-            //End deletion.
-
-
             if (sittingcarValue > 0.85) {
                 sittingIntoCar = true;
-                makeNoise();
+//                makeNoise();
                 onPause();
             }
 
@@ -341,8 +321,8 @@ public class DetectDrivingService extends Service implements SensorEventListener
         return array;
     }
 
-    private void makeNoise() {
-        Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-        rTone.play();
-    }
+//    private void makeNoise() {
+//        Ringtone rTone = RingtoneManager.getRingtone(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+//        rTone.play();
+//    }
 }

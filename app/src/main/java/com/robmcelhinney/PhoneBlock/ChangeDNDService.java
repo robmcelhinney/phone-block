@@ -16,7 +16,6 @@ public class ChangeDNDService extends Service {
 
     public void onCreate() {
         super.onCreate();
-
         doNotDisturbBroadcastReceiver = new doNotDisturbBroadcastReceiver();
         intentChangingDND = new IntentFilter();
         intentChangingDND.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);

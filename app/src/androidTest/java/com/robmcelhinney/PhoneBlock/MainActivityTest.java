@@ -15,6 +15,7 @@ import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class MainActivityTest {
 
@@ -48,6 +49,17 @@ public class MainActivityTest {
         assertNotNull(installedAppsActivity);
 
         installedAppsActivity.finish();
+    }
+
+    @Test
+    public void testStartBlock() throws InterruptedException {
+        assertNotNull(mActivity.findViewById(R.id.toggleButtonActive));
+
+        onView(withId(R.id.toggleButtonActive)).perform(click());
+
+        Thread.sleep(2000);
+
+        assertTrue(UtilitiesService.isActive());
     }
 
     @After

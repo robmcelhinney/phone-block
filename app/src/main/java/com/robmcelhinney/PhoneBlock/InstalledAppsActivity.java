@@ -87,7 +87,7 @@ public class InstalledAppsActivity extends AppCompatActivity {
         private int layout;
         boolean checkState[];
 
-        public MyListAdapter(Context context, List<String> objects) {
+        MyListAdapter(Context context, List<String> objects) {
             super(context, R.layout.list_item, objects);
             layout = R.layout.list_item;
             checkState = new boolean[objects.size()];
@@ -158,9 +158,9 @@ public class InstalledAppsActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        editor.clear();
-        editor.putStringSet("selectedAppsPackage", selectedAppsPackageName);
-        editor.commit();
+        editor.clear()
+                .putStringSet("selectedAppsPackage", selectedAppsPackageName)
+                .commit();
         super.onPause();
     }
 

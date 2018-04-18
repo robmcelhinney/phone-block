@@ -28,7 +28,6 @@ public class Overlay extends Service {
     public void onCreate() {
         super.onCreate();
         settings = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
-
         appChecker = new AppChecker();
         closedApps = new HashMap<>();
     }
@@ -79,9 +78,9 @@ public class Overlay extends Service {
     }
 
     private void goHome() {
-        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-        homeIntent.addCategory(Intent.CATEGORY_HOME);
-        homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(homeIntent);
     }
 
